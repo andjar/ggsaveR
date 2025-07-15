@@ -16,9 +16,11 @@ read_ggsaveR_data <- function(path) {
     stop("Data embedding is only supported for PNG files.", call. = FALSE)
   }
 
-  # Read the PNG and its metadata chunks
-  img <- png::readPNG(path, native = FALSE, metadata = TRUE)
+  # Read the PNG. The metadata is automatically attached as an attribute
+  # by the png package, so we don't need a special argument.
+  img <- png::readPNG(path, native = FALSE)
 
+  # Retrieve the metadata from the object's attributes
   metadata <- attr(img, "metadata")
 
   if (is.null(metadata) || is.null(metadata$ggsaveR_data)) {
