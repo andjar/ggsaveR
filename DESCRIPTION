@@ -1,14 +1,24 @@
 Package: ggsaveR
-Title: Extending ggsave
-Version: 0.0.0.9000
+Title: A Wrapper for 'ggplot2::ggsave' with Extra Features
+Version: 0.1.0
 Authors@R: 
     person("Anders Hagen", "Jarmund", , "anders.h.jarmund@ntnu.no", role = c("aut", "cre"))
-Description: Useful extensions of the ggsave function from the ggplot2 package: Embed data in png files, save to multiple formats, and avoid overwrite
-    of existing files.
+Description: Extends the functionality of 'ggplot2::ggsave()' to allow for 
+    saving plots to multiple formats at once, embedding plot data within PNG 
+    files for reproducibility, and automatically generating unique filenames 
+    to prevent overwriting existing files.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 URL: https://andjar.github.io/ggsaveR/
-Imports:
-    ggplot2
+Imports: 
+    ggplot2,
+    png,
+    base64enc,
+    tools,
+    rlang
+Suggests:
+    testthat,
+    knitr,
+    rmarkdown
