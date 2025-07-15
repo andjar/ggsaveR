@@ -19,6 +19,7 @@ Imports:
     tools,
     rlang
 Suggests:
-    testthat,
+    testthat (>= 3.0.0),
     knitr,
     rmarkdown
+Config/testthat/edition: 3
