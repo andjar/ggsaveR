@@ -22,11 +22,7 @@ read_ggsaveR_data <- function(path) {
   dev <- tolower(tools::file_ext(path))
 
   if (dev != "png") {
-    warning(
-      "This function is currently optimized for reading ggsaveR data from PNG files. ",
-      "Support for other formats is not yet implemented in this version.", call. = FALSE
-    )
-    return(NULL)
+    stop("Data embedding is only supported for PNG files.", call. = FALSE)
   }
 
   tryCatch({

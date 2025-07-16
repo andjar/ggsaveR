@@ -14,18 +14,7 @@
 #   png,
 #   base64enc
 
-# Your unique_filename helper is perfect.
-unique_filename <- function(path) {
-  if (!file.exists(path)) return(path)
-  base <- tools::file_path_sans_ext(path)
-  ext <- tools::file_ext(path)
-  i <- 1
-  repeat {
-    new_path <- sprintf("%s-%d.%s", base, i, ext)
-    if (!file.exists(new_path)) return(new_path)
-    i <- i + 1
-  }
-}
+# unique_filename function is defined in utils.R
 
 #' Saves a PNG with embedded R metadata using native R packages
 #'
