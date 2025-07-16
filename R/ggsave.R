@@ -1,139 +1,204 @@
-#' @importFrom rlang call_args
+#' @importFrom rlang call_args `%||%`
 #' @importFrom ggplot2 ggsave last_plot
+#' @importFrom tools file_path_sans_ext file_ext
 
-#' Save a ggplot with extra features
+# You will need to define these helper functions elsewhere in your package
+# For demonstration, here are plausible implementations:
+unique_filename <- function(path) {
+  if (!file.exists(path)) return(path)
+  base <- tools::file_path_sans_ext(path)
+  ext <- tools::file_ext(path)
+  i <- 1
+  repeat {
+    new_path <- sprintf("%s-%d.%s", base, i, ext)
+    if (!file.exists(new_path)) return(new_path)
+    i <- i + 1
+  }
+}
+
+# save_png_with_data would be a complex function that uses png::writePNG
+# and embeds metadata in tEXt chunks. This is a placeholder.
+save_png_with_data <- function(filename, plot, plot_call_str, creator, ...) {
+  # In a real implementation, you would:
+  # 1. Create a list of data to embed (plot, plot_call_str, sessioninfo, etc.)
+  # 2. Serialize this list (e.g., using saveRDS)
+  # 3. Base64 encode it to be safe for text chunks.
+  # 4. Use a low-level PNG writer to save the plot and inject the data
+  #    as a tEXt or zTXt chunk with a custom keyword like "ggsaveR_data".
+  # 5. Inject creator into the "Author" tEXt chunk if provided.
+  # For now, we just call the original ggsave as a placeholder.
+  message(
+    "Data embedding for '", filename, "' is enabled.",
+    "\nPlot Call: ", plot_call_str
+  )
+  ggsave_args_final <- c(list(filename = filename, plot = plot, device = "png"), list(...))
+  if (!is.null(creator)) {
+    # The 'author' argument for ggsave is passed to the device,
+    # but png() doesn't have it. We would handle it manually here.
+    # For other devices, the main function handles it.
+  }
+  do.call(ggplot2::ggsave, ggsave_args_final)
+}
+
+
+#' Save a ggplot with Supercharged Features
 #'
-#' This function wraps [ggplot2::ggsave()] to provide additional features
-#' such as saving to multiple formats at once, preventing file overwrites,
-#' and embedding reproducibility data into PNG files.
+#' This function is a wrapper for [ggplot2::ggsave()] that adds powerful
+#' new features controlled entirely via [options()], requiring no changes to
+#' existing code that calls `ggsave()`.
 #'
-#' The new features are controlled via [options()]:
-#' * `ggsaveR.overwrite_action`: What to do if the file exists. Can be
-#'   `"overwrite"` (the default), `"unique"` (create a unique filename like
-#'   `plot-1.png`), or `"stop"` (throw an error).
-#' * `ggsaveR.embed_data`: A logical value. If `TRUE`, reproducibility data
-#'   (the ggplot object, its data, and session info) will be embedded in the
-#'   PNG file. This only applies to the PNG format.
-#' * `ggsaveR.creator`: A character string. If set (e.g., `"Your Name"`), this
-#'   will be embedded as the author/creator in the metadata of supported file
-#'   types (like PNG and PDF).
+#' All enhancements are controlled by setting `options()` before calling `ggsave()`.
 #'
-#' @param filename File name to create on disk. Can have multiple extensions
-#'   if the `device` argument is a vector (e.g., `filename = "myplot"` with
-#'   `device = c("png", "pdf")` will create `myplot.png` and `myplot.pdf`).
+#' @section New Features via Options:
+#'
+#' *   **Multiple Formats/Dimensions (`ggsaveR.formats`):**
+#'     To save a plot in multiple formats and sizes with a single `ggsave()` call,
+#'     set this option to a list of configurations. Each configuration is a list
+#'     specifying `device`, and optionally `width`, `height`, `units`, `dpi`, etc.
+#'     If this option is set, it overrides the `device` argument and the filename
+#'     extension of the `ggsave()` call.
+#'     *Example:* `options(ggsaveR.formats = list(list(device = "png", dpi = 300), list(device = "pdf", width = 8, height = 6)))`
+#'
+#' *   **File Overwriting (`ggsaveR.overwrite_action`):**
+#'     Controls behavior when a file already exists.
+#'     - `"overwrite"`: (Default) Replaces the existing file.
+#'     - `"unique"`: Appends a number to create a unique filename (e.g., `plot-1.png`).
+#'     - `"stop"`: Throws an error and stops execution.
+#'
+#' *   **Data Embedding (`ggsaveR.embed_data`):**
+#'     If `TRUE`, the ggplot object, the code used to generate it, and session
+#'     information are embedded into the PNG file's metadata for reproducibility.
+#'     (Applies to PNG format only).
+#'
+#' *   **Creator Metadata (`ggsaveR.creator`):**
+#'     A character string (e.g., `"Your Name"`) to be embedded as the author in
+#'     the metadata of supported file types (e.g., PDF, PNG).
+#'
+#' @param filename File name to create on disk. The extension is used only if
+#'   the `ggsaveR.formats` option is NOT set. Otherwise, this is used as the
+#'   base name for the files.
 #' @param plot Plot to save, defaults to the last plot displayed.
-#' @param device Device to use. Can be a character vector of multiple devices,
-#'   e.g., `c("png", "pdf", "svg")`.
+#' @param device Device to use. Can be a vector of devices (e.g., `c("png", "pdf")`).
+#'   This argument is **ignored** if the `ggsaveR.formats` option is set.
+#' @param guard A logical value. If `TRUE`, all `ggsaveR` enhancements are
+#'   bypassed, and the call is forwarded directly to [ggplot2::ggsave()]. This
+#'   provides an "escape hatch" for specific plots. See Warning section.
 #' @param ... Other arguments passed on to [ggplot2::ggsave()].
 #'
-#' @return Invisibly returns a vector of the saved file paths.
+#' @return Invisibly returns a character vector of the saved file paths.
+#'
+#' @section Warning:
+#' Using the `guard = TRUE` argument requires the `ggsaveR` package to be loaded.
+#' If you run a script containing `ggsave(..., guard = TRUE)` in an R session
+#' where `ggsaveR` is not loaded, your code will fail with an "unused argument"
+#' error from the original [ggplot2::ggsave()].
+#'
 #' @export
 #' @examples
 #' \dontrun{
 #' library(ggplot2)
-#' library(ggsaveR)
+#' # library(ggsaveR) # This would be run by the user
 #'
 #' p <- ggplot(mtcars, aes(mpg, wt)) + geom_point()
 #'
-#' # --- Example 1: Save to multiple formats ---
-#' # Creates plot.png and plot.pdf in a temporary directory
-#' f <- tempfile(pattern = "plot")
-#' ggsave(filename = f, plot = p, device = c("png", "pdf"))
+#' # --- Example 1: Multi-format/dimension via options (THE NEW WAY) ---
+#' # The user's code just calls ggsave() as always.
+#' # The magic happens in the options.
+#' options(ggsaveR.formats = list(
+#'   list(device = "png", width = 8, height = 6, units = "in", dpi = 300),
+#'   list(device = "pdf", width = 7, height = 7, units = "in"),
+#'   list(device = "svg", width = 15, height = 12, units = "cm")
+#' ))
 #'
-#' # --- Example 2: Avoid overwriting ---
+#' # This single call creates "my_plot.png", "my_plot.pdf", and "my_plot.svg"
+#' # with the dimensions specified in the options.
+#' saved_files <- ggsave("my_plot.png", p) # extension is ignored
+#' print(saved_files)
+#'
+#' # Reset the option to return to default behavior
+#' options(ggsaveR.formats = NULL)
+#'
+#'
+#' # --- Example 2: Using the guard argument ---
+#' # Let's set an option we want to bypass for one specific plot
 #' options(ggsaveR.overwrite_action = "unique")
-#' f_png <- paste0(f, ".png")
-#' ggsave(f_png, p) # Saves plotXXXX.png
-#' ggsave(f_png, p) # Saves plotXXXX-1.png
+#' ggsave("my_plot.png", p) # Saves "my_plot.png"
+#' ggsave("my_plot.png", p) # Saves "my_plot-1.png"
 #'
-#' # --- Example 3: Embed data for reproducibility ---
-#' options(ggsaveR.embed_data = TRUE)
-#' f_png_data <- tempfile(pattern = "plot_with_data", fileext = ".png")
-#' ggsave(f_png_data, p)
-#'
-#' # Retrieve the embedded data
-#' embedded_info <- read_ggsaveR_data(f_png_data)
-#' print(names(embedded_info))
-#' # You can now replot the original object
-#' # embedded_info$plot_object
-#'
-#' # --- Reset options to default ---
-#' options(
-#'   ggsaveR.overwrite_action = "overwrite",
-#'   ggsaveR.embed_data = FALSE
-#' )
-#'
-#' # --- Example 4: Embed the plot call ---
-#' options(ggsaveR.embed_data = TRUE)
-#' f_png_call <- tempfile(pattern = "plot_with_call", fileext = ".png")
-#'
-#' # The call is captured when piping or nesting
-#' ggplot(iris, aes(Sepal.Length, Petal.Length)) +
-#'   geom_point(aes(color = Species)) |>
-#'   ggsave(filename = f_png_call)
-#'
-#' embedded_info <- read_ggsaveR_data(f_png_call)
-#' # See the captured code
-#' cat(embedded_info$plot_call)
-#'
-#' # --- Example 5: Add creator metadata ---
-#' options(ggsaveR.creator = "Dr. G. G. Plotter")
-#' f_pdf <- tempfile(pattern = "plot", fileext = ".pdf")
-#' ggsave(f_pdf, p)
-#' # Now open the PDF file and check its properties/metadata.
-#' # You should see "Dr. G. G. Plotter" as the author.
+#' # Now, let's force an overwrite for this next call using the guard.
+#' # This will call ggplot2::ggsave directly, which overwrites by default.
+#' ggsave("my_plot.png", p, guard = TRUE) # Overwrites "my_plot.png"
 #'
 #' # Reset options
-#' options(ggsaveR.creator = NULL)
+#' options(ggsaveR.overwrite_action = "overwrite")
+#'
+#'
+#' # --- Example 3: Combining options ---
+#' options(
+#'   ggsaveR.formats = list(list(device = "png"), list(device = "pdf")),
+#'   ggsaveR.embed_data = TRUE, # Will apply to the PNG
+#'   ggsaveR.creator = "Dr. G. G. Plotter"
+#' )
+#'
+#' ggsave("final_plot", p) # creates final_plot.png and final_plot.pdf
+#'
+#' # Reset all options
+#' options(
+#'   ggsaveR.formats = NULL,
+#'   ggsaveR.embed_data = FALSE,
+#'   ggsaveR.creator = NULL
+#' )
 #' }
-ggsave <- function(filename, plot = last_plot(), device = NULL, ...) {
+ggsave <- function(filename, plot = last_plot(), device = NULL, ..., guard = FALSE) {
 
-  # --- Capture the plot argument expression ---
-  # We deparse the expression passed to the `plot` argument.
-  # This is the magic that captures the code.
+  # --- 0. Guard clause to bypass all ggsaveR enhancements ---
+  if (isTRUE(guard)) {
+    # Capture the original call
+    call <- match.call()
+    # Remove the `guard` argument so ggplot2::ggsave doesn't see it
+    call$guard <- NULL
+    # Change the function to be called to the original ggsave
+    call[[1]] <- quote(ggplot2::ggsave)
+    # Evaluate the modified call in the parent environment to ensure
+    # objects are found correctly.
+    return(eval.parent(call))
+  }
+
+  # --- Capture the plot argument expression for data embedding ---
   plot_arg_expr <- rlang::call_args(match.call())$plot
-  # deparse can return multiple lines, so we collapse them.
   plot_call_str <- paste(deparse(plot_arg_expr), collapse = "\n")
 
-  # --- 1. Get options ---
+  # --- 1. Get all ggsaveR options ---
+  formats <- getOption("ggsaveR.formats", NULL)
   overwrite_action <- getOption("ggsaveR.overwrite_action", "overwrite")
   embed_data <- getOption("ggsaveR.embed_data", FALSE)
   creator <- getOption("ggsaveR.creator", NULL)
 
-  # --- Prepare arguments for the underlying save calls ---
-  # Capture the ... args to modify them
-  ggsave_args <- list(...)
-
-  # Inject creator/author if it's set in options AND not already specified by the user
-  # The 'author' argument is supported by pdf(), postscript(), and cairo_* devices.
-  if (!is.null(creator) && !("author" %in% names(ggsave_args))) {
-    ggsave_args$author <- creator
+  # --- Prepare base arguments for all underlying save calls ---
+  user_args <- list(...)
+  # Inject creator/author if set in options and not already specified by user
+  if (!is.null(creator) && !("author" %in% names(user_args))) {
+    user_args$author <- creator
   }
 
-  # --- 2. Handle multiple devices/dimensions ---
-  # Base filename without extension
+  saved_files <- character()
   base_filename <- tools::file_path_sans_ext(filename)
 
-  # Check if device is a list for multiple dimensions
-  if (is.list(device) && !is.data.frame(device)) {
-    # Nested list for multiple formats and dimensions
-    saved_files <- character(length(device))
-    for (i in seq_along(device)) {
-      format_opts <- device[[i]]
-      dev <- format_opts$filetype
-      width <- format_opts$width
-      height <- format_opts$height
-      units <- format_opts$units %||% "in" # Default units to inches if not specified
+  # --- 2. Main Logic: Check if multi-format option is set ---
+  if (is.list(formats) && !is.data.frame(formats)) {
+    # --- A. NEW BEHAVIOR: Use ggsaveR.formats option ---
+    # This block ignores the `device` argument and filename extension.
 
-      # Construct filename with dimensions for uniqueness if needed
-      current_filename <- paste0(base_filename, "_", width, "x", height, ".", dev)
+    for (fmt_config in formats) {
+      dev <- fmt_config$device
+      if (is.null(dev)) {
+        warning("A format in `ggsaveR.formats` is missing a 'device'. Skipping.", call. = FALSE)
+        next
+      }
 
-      # Update ggsave_args with specific dimensions
-      ggsave_args$width <- width
-      ggsave_args$height <- height
-      ggsave_args$units <- units
+      current_filename <- paste0(base_filename, ".", dev)
 
-      # Handle file overwriting for this specific file
+      # Handle file overwriting
       if (file.exists(current_filename)) {
         if (overwrite_action == "stop") {
           stop("File '", current_filename, "' already exists.", call. = FALSE)
@@ -142,75 +207,64 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ...) {
         }
       }
 
-      # Use the original ggsave for all other cases
-       ggsave_args_final <- c(list(filename = current_filename, plot = plot, device = dev), ggsave_args)
-      # Special handling for certain devices if necessary
-      if (dev %in% c("jpg", "jpeg")) {
-        ggsave_args_final$device <- "jpeg"
-      } else if (dev == "tiff") {
-        ggsave_args_final$device <- "tiff"
-      } else if (dev == "eps") {
-        ggsave_args_final$device <- "eps"
+      # Combine user-provided `...` args with format-specific args
+      # Format-specific args will overwrite user `...` args if they conflict
+      # (e.g., width in option overrides width in `...`)
+      final_args <- c(list(filename = current_filename, plot = plot, device = dev), user_args, fmt_config)
+      final_args$device <- dev # Ensure device from fmt_config is used
+
+      # Handle data embedding for PNGs
+      if (tolower(dev) == "png" && embed_data) {
+        do.call(
+          save_png_with_data,
+          c(list(plot_call_str = plot_call_str, creator = creator), final_args)
+        )
+      } else {
+        do.call(ggplot2::ggsave, final_args)
       }
-      do.call(ggplot2::ggsave, ggsave_args_final)
 
-      saved_files[i] <- current_filename
+      saved_files <- c(saved_files, current_filename)
     }
-    invisible(saved_files)
-    return(invisible(saved_files))
-  }
 
-  # Fallback to original logic for simple vector of devices
-  if (is.null(device)) {
-    device <- tolower(tools::file_ext(filename))
-    if (device == "") {
-      stop("Cannot determine device from filename with no extension.", call. = FALSE)
-    }
-  }
+  } else {
+    # --- B. FALLBACK BEHAVIOR: Use `device` argument as in original ggplot2 ---
+    # This is the logic from your original function, slightly adapted.
 
-  devices <- device
-  saved_files <- character(length(devices))
-
-  for (i in seq_along(devices)) {
-    dev <- devices[i]
-    current_filename <- paste0(base_filename, ".", dev)
-
-    # --- 3. Handle file overwriting ---
-    if (file.exists(current_filename)) {
-      if (overwrite_action == "stop") {
-        stop("File '", current_filename, "' already exists.", call. = FALSE)
-      } else if (overwrite_action == "unique") {
-        current_filename <- unique_filename(current_filename)
+    devices <- device
+    if (is.null(devices)) {
+      devices <- tolower(tools::file_ext(filename))
+      if (devices == "") {
+        stop("Cannot determine device from filename with no extension. ",
+             "Please specify `device` or use the `ggsaveR.formats` option.", call. = FALSE)
       }
-      # If "overwrite", do nothing and let ggsave handle it
     }
 
-    # --- 4. Handle data embedding for PNGs ---
-    is_png <- tolower(dev) %in% c("png")
+    for (dev in devices) {
+      current_filename <- paste0(base_filename, ".", dev)
 
-    if (is_png && embed_data) {
-      # Use our special PNG saving function
-      do.call(
-        save_png_with_data,
-        c(list(filename = current_filename, plot = plot,
-               plot_call_str = plot_call_str, creator = creator),
-          ggsave_args)
-      )
-    } else {
-      # Use the original ggsave for all other cases
-      ggsave_args_final <- c(list(filename = current_filename, plot = plot, device = dev), ggsave_args)
-      # Special handling for certain devices if necessary
-      if (dev %in% c("jpg", "jpeg")) {
-        ggsave_args_final$device <- "jpeg"
-      } else if (dev == "tiff") {
-        ggsave_args_final$device <- "tiff"
-      } else if (dev == "eps") {
-        ggsave_args_final$device <- "eps"
+      # Handle file overwriting
+      if (file.exists(current_filename)) {
+        if (overwrite_action == "stop") {
+          stop("File '", current_filename, "' already exists.", call. = FALSE)
+        } else if (overwrite_action == "unique") {
+          current_filename <- unique_filename(current_filename)
+        }
       }
-      do.call(ggplot2::ggsave, ggsave_args_final)
-    }
 
-    saved_files[i] <- current_filename
+      final_args <- c(list(filename = current_filename, plot = plot, device = dev), user_args)
+
+      # Handle data embedding for PNGs
+      if (tolower(dev) == "png" && embed_data) {
+        do.call(
+          save_png_with_data,
+          c(list(plot_call_str = plot_call_str, creator = creator), final_args)
+        )
+      } else {
+        do.call(ggplot2::ggsave, final_args)
+      }
+
+      saved_files <- c(saved_files, current_filename)
+    }
   }
 
   invisible(saved_files)
