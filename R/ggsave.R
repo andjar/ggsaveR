@@ -148,7 +148,8 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ..., guard = FAL
 # Filter out arguments that shouldn't be passed to ggplot2::ggsave
 filter_ggplot2_args <- function(args) {
   # List of arguments that are specific to ggsaveR and shouldn't be passed to ggplot2::ggsave
-  ggsaveR_args <- c("embed_data", "creator", "author", "guard")
+  # Also filter out arguments that we explicitly pass to avoid conflicts
+  ggsaveR_args <- c("embed_data", "creator", "author", "guard", "device", "filename", "plot")
   args[!names(args) %in% ggsaveR_args]
 }
 
