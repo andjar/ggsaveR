@@ -18,7 +18,8 @@ Imports:
     base64enc,
     tools,
     ragg,
-    rlang
+    rlang,
+    svglite
 Suggests:
     testthat (>= 3.0.0),
     knitr,
