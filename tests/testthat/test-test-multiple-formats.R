@@ -18,7 +18,7 @@ test_that("ggsave saves multiple formats via ggsaveR.formats option", {
 
   # The filename extension here should be ignored by the function
   base_filename <- "plot_via_options"
-  saved_files <- ggsave(paste0(base_filename, ".foo"), p) # Use .foo to confirm it's ignored
+  saved_files <- ggsaveR::ggsave(paste0(base_filename, ".foo"), p) # Use .foo to confirm it's ignored
 
   # Check that the files defined in the option were created
   expected_files <- paste0(base_filename, c(".png", ".pdf", ".svg"))
@@ -40,7 +40,7 @@ test_that("ggsave still supports a vector for the device argument as a fallback"
   base_filename <- "plot_via_device_arg"
 
   # This is the original test logic
-  saved_files <- ggsave(base_filename, p, device = c("png", "pdf"))
+  saved_files <- ggsaveR::ggsave(base_filename, p, device = c("png", "pdf"))
 
   expected_files <- paste0(base_filename, c(".png", ".pdf"))
   expect_true(all(file.exists(expected_files)))
@@ -60,7 +60,7 @@ test_that("ggsaveR.formats option takes precedence over the device argument", {
   base_filename <- "precedence_test"
 
   # Call ggsave with a conflicting `device` argument
-  saved_files <- ggsave(base_filename, p, device = c("png", "pdf"))
+  saved_files <- ggsaveR::ggsave(base_filename, p, device = c("png", "pdf"))
 
   # Check that ONLY the file from the option was created
   expected_file <- paste0(base_filename, ".svg")

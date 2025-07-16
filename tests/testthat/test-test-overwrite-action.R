@@ -5,12 +5,12 @@ test_that("overwrite_action = 'unique' works correctly", {
   filename <- "unique_test.png"
 
   # First save
-  ggsave(filename, p)
+  ggsaveR::ggsave(filename, p)
   expect_true(file.exists(filename))
 
   # Second save should create a new file and print a message
   expect_message(
-    ggsave(filename, p),
+    ggsaveR::ggsave(filename, p),
     "File exists. Saving to unique_test-1.png instead."
   )
 
@@ -23,11 +23,11 @@ test_that("overwrite_action = 'stop' works correctly", {
   withr::local_options(list(ggsaveR.overwrite_action = "stop"))
 
   filename <- "stop_test.png"
-  ggsave(filename, p) # First save
+  ggsaveR::ggsave(filename, p) # First save
 
   # Second save should throw an error
   expect_error(
-    ggsave(filename, p),
+    ggsaveR::ggsave(filename, p),
     "File 'stop_test.png' already exists."
   )
 })
@@ -37,13 +37,13 @@ test_that("overwrite_action = 'overwrite' works correctly (default)", {
   withr::local_options(list(ggsaveR.overwrite_action = "overwrite"))
 
   filename <- "overwrite_test.png"
-  ggsave(filename, p)
+  ggsaveR::ggsave(filename, p)
   info1 <- file.info(filename)
 
   # Wait a moment to ensure modification time can change
   Sys.sleep(0.1)
 
-  ggsave(filename, p)
+  ggsaveR::ggsave(filename, p)
   info2 <- file.info(filename)
 
   # File should be overwritten (mod time changes), no new file created

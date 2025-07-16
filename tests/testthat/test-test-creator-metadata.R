@@ -3,7 +3,7 @@ test_that("Creator metadata is added to PNG files", {
   withr::local_options(list(ggsaveR.creator = test_creator))
 
   filename <- "creator_test.png"
-  ggsave(filename, p)
+  ggsaveR::ggsave(filename, p)
 
   # Read PNG metadata
   img_meta <- png::readPNG(filename, info = TRUE)
@@ -21,7 +21,7 @@ test_that("Creator metadata is passed to PDF device", {
   filename <- "creator_test.pdf"
 
   # Expect no errors when passing the 'author' argument to the pdf device
-  expect_no_error(ggsave(filename, p))
+  expect_no_error(ggsaveR::ggsave(filename, p))
   expect_true(file.exists(filename))
 })
 
@@ -31,12 +31,12 @@ test_that("User-provided 'author' argument overrides the option", {
 
   # For PDF, the 'author' argument in ... should take precedence
   filename_pdf <- "creator_override.pdf"
-  expect_no_error(ggsave(filename_pdf, p, author = "Override Author"))
+  expect_no_error(ggsaveR::ggsave(filename_pdf, p, author = "Override Author"))
 
   # For PNG, the 'creator' argument is passed directly, not from '...'
   # so it should still use the option value. This is expected behavior.
   filename_png <- "creator_no_override.png"
-  ggsave(filename_png, p, author = "Override Author")
+  ggsaveR::ggsave(filename_png, p, author = "Override Author")
   img_meta <- png::readPNG(filename_png, info = TRUE)
   metadata <- attr(img_meta, "metadata")
 

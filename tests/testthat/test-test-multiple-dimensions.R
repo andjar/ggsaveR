@@ -23,7 +23,7 @@ test_that("ggsave saves multiple formats with varying dimensions via options", {
   base_filename <- "multi_dim_plot"
 
   # The device argument and filename extension are ignored
-  saved_files <- ggsave(filename = base_filename, plot = p)
+  saved_files <- ggsaveR::ggsave(filename = base_filename, plot = p)
 
   # IMPORTANT: The filenames no longer contain the dimensions.
   # The dimensions are passed to the graphics device but do not alter the name.

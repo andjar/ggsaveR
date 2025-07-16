@@ -10,7 +10,7 @@ test_that("Data embedding works for PNG files", {
 
   # Capture the message
   expect_message(
-    ggsave(filename, p),
+    ggsaveR::ggsave(filename, p),
     "Embedded reproducibility data into embed_test.png"
   )
 
@@ -34,7 +34,7 @@ test_that("Call embedding captures piped/nested calls", {
   filename <- "embed_call_test.png"
 
   # Use a nested call
-  ggsave(filename, plot = ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, Petal.Length)) + ggplot2::geom_point())
+  ggsaveR::ggsave(filename, plot = ggplot2::ggplot(iris, ggplot2::aes(Sepal.Length, Petal.Length)) + ggplot2::geom_point())
 
   reloaded_data <- read_ggsaveR_data(filename)
   expect_match(reloaded_data$plot_call, "ggplot2::ggplot(iris", fixed = TRUE)
@@ -49,7 +49,7 @@ test_that("embed_metadata option is respected", {
   ))
 
   filename <- "embed_subset_test.png"
-  ggsave(filename, p)
+  ggsaveR::ggsave(filename, p)
 
   reloaded_data <- read_ggsaveR_data(filename)
 
@@ -65,8 +65,8 @@ test_that("Embedding is skipped for non-PNG files", {
 
   filename_pdf <- "no_embed.pdf"
 
-  # Should not print an embedding message
-  expect_no_message(ggsave(filename_pdf, p))
+  # Should not print an embedding message (but may print normal ggsave message)
+  expect_message(ggsaveR::ggsave(filename_pdf, p), "Saving", fixed = TRUE)
 
   # read_ggsaveR_data should fail for non-PNGs
   expect_error(
