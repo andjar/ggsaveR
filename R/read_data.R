@@ -33,15 +33,15 @@ read_ggsaveR_data <- function(path) {
     # readPNG with info=TRUE gets metadata without reading the large image raster
     png_info <- png::readPNG(path, info = TRUE)
 
-    # The metadata is in the 'text' attribute
-    text_chunks <- attr(png_info, "text", exact = TRUE)
+    # The metadata is in the 'metadata' attribute
+    metadata_chunks <- attr(png_info, "metadata", exact = TRUE)
 
-    if (is.null(text_chunks) || is.null(text_chunks$ggsaveR_data)) {
+    if (is.null(metadata_chunks) || is.null(metadata_chunks$ggsaveR_data)) {
       warning("No ggsaveR_data chunk found in this PNG file.", call. = FALSE)
       return(NULL)
     }
 
-    encoded_data <- text_chunks$ggsaveR_data
+    encoded_data <- metadata_chunks$ggsaveR_data
 
     # Reverse the pipeline: Base64 Decode -> Decompress -> Unserialize
     compressed_data <- base64enc::base64decode(encoded_data)

@@ -49,11 +49,26 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
   # Add custom, machine-readable data blob for reproducibility
   if (isTRUE(embed_data)) {
     message("Embedded reproducibility data into ", basename(filename))
+    
+    # Get options for what to embed
+    embed_opts <- getOption("ggsaveR.embed_metadata", c("plot", "data", "session_info", "call"))
+    
     repro_data <- list(
-      ggsaveR_version = packageVersion("ggsaveR"),
-      plot_call = plot_call_str,
-      session_info = sessionInfo()
+      ggsaveR_version = packageVersion("ggsaveR")
     )
+    
+    if ("plot" %in% embed_opts) {
+      repro_data$plot_object <- plot
+    }
+    if ("data" %in% embed_opts && !is.null(plot$data)) {
+      repro_data$plot_data <- plot$data
+    }
+    if ("session_info" %in% embed_opts) {
+      repro_data$session_info <- sessionInfo()
+    }
+    if ("call" %in% embed_opts) {
+      repro_data$plot_call <- plot_call_str
+    }
 
     # Pipeline: Serialize R object -> Compress -> Base64 Encode for tEXt chunk
     serialized_data <- serialize(repro_data, NULL)
@@ -108,7 +123,7 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
 
   # --- 3. Write the final PNG with the plot image and metadata ---
   tryCatch({
-    png::writePNG(image = captured_plot, target = filename, text = text_chunks)
+    png::writePNG(image = captured_plot, target = filename, metadata = text_chunks)
     message("Successfully saved '", filename, "' with metadata.")
   }, error = function(e) {
     stop("Failed to write final PNG file '", filename, "': ", e$message, call. = FALSE)
@@ -144,7 +159,7 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ..., guard = FAL
 # Filter out arguments that shouldn't be passed to ggplot2::ggsave
 filter_ggplot2_args <- function(args) {
   # List of arguments that are specific to ggsaveR and shouldn't be passed to ggplot2::ggsave
-  ggsaveR_args <- c("embed_data", "creator", "author")
+  ggsaveR_args <- c("embed_data", "creator", "author", "guard")
   args[!names(args) %in% ggsaveR_args]
 }
 
