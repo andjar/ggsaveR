@@ -1,0 +1,96 @@
+---
+title: "Advanced Techniques with ggsaveR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Advanced Techniques with ggsaveR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+This vignette covers the most advanced features of `ggsaveR`, focusing on reproducibility and fine-grained control. We will explore how to embed reproducibility data into PNG files and how to use the `guard` argument to bypass global settings for specific `ggsave()` calls.
+
+```{r}
+library(ggplot2)
+library(ggsaveR)
+```
+
+## Reproducibility: Embedding Data in PNGs
+
+For maximum reproducibility, `ggsaveR` can embed the `ggplot` object, the R code that generated it, and session information directly into the PNG file's metadata. This is controlled by the `ggsaveR.embed_data` option.
+
+```{r}
+options(ggsaveR.embed_data = TRUE)
+```
+
+When this option is `TRUE`, any plot saved as a PNG will contain this extra information. `ggsaveR` captures the plot-generating code, even when using pipes.
+
+```{r, eval=FALSE}
+# The plot object and the code below are embedded in the PNG file
+iris |>
+  subset(Species != "setosa") |>
+  ggplot(aes(Sepal.Length, Petal.Length)) +
+  geom_point(aes(color = Species)) |>
+  ggsave("plot_with_embedded_data.png")
+```
+
+You can then use the `read_ggsaveR_data()` function to extract this information from the saved PNG.
+
+```{r, eval=FALSE}
+# Read the embedded data
+embedded_info <- read_ggsaveR_data("plot_with_embedded_data.png")
+
+# View the code that generated the plot
+cat(embedded_info$plot_call)
+#> iris |>
+#>   subset(Species != "setosa") |>
+#>   ggplot(aes(Sepal.Length, Petal.Length)) +
+#>   geom_point(aes(color = Species))
+
+# You can even replot the original ggplot object
+# embedded_info$plot_object
+```
+
+```{r}
+# Reset the option
+options(ggsaveR.embed_data = FALSE)
+```
+
+## The Escape Hatch: `guard = TRUE`
+
+Sometimes you have global options set but need to bypass them for a single, specific `ggsave()` call. The `guard = TRUE` argument serves as an "escape hatch," telling `ggsaveR` to step aside and pass the call directly to the original `ggplot2::ggsave`.
+
+### Use Case: Preventing Sensitive Data Embedding
+
+Imagine you have `ggsaveR.embed_data = TRUE` set globally for reproducibility. However, one specific plot is generated from sensitive or very large data that you do not want to embed in the PNG file.
+
+```{r, eval=FALSE}
+# Global setting for reproducibility
+options(ggsaveR.embed_data = TRUE)
+
+# This plot contains sensitive information
+sensitive_data <- data.frame(
+  x = rnorm(10),
+  y = rnorm(10),
+  secret = "Confidential Information"
+)
+p_sensitive <- ggplot(sensitive_data, aes(x, y)) + geom_point()
+
+# Use guard = TRUE to save the plot without embedding the data
+# This call will use the standard ggplot2::ggsave behavior
+ggsave("sensitive_plot.png", p_sensitive, guard = TRUE)
+```
+
+The `guard = TRUE` argument ensures that for this one call, none of the `ggsaveR` enhancements are applied. The plot will be saved as a standard PNG, without any embedded data, and it will overwrite any existing file with the same name, regardless of the `ggsaveR.overwrite_action` setting.
+
+> **Warning:** Using `guard = TRUE` in a script requires that the `ggsaveR` package is loaded. If it is not, the original `ggplot2::ggsave` will throw an "unused argument" error for `guard`.
+
+These advanced features make `ggsaveR` a powerful tool for managing complex data analysis workflows, enhancing reproducibility while providing the flexibility to handle exceptions.
