@@ -42,9 +42,7 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
     # Get options for what to embed
     embed_opts <- getOption("ggsaveR.embed_metadata", c("plot", "data", "session_info", "call"))
     
-    repro_data <- list(
-      ggsaveR_version = packageVersion("ggsaveR")
-    )
+    repro_data <- list()
     
     if ("plot" %in% embed_opts) {
       repro_data$plot_object <- plot

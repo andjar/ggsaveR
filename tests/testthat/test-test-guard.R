@@ -19,7 +19,7 @@ test_that("guard = TRUE bypasses all ggsaveR enhancements", {
 
   # Call ggsave with `guard = TRUE`. It should only save a single SVG file.
   filename_svg <- "guard_test.svg"
-  ggsave(filename_svg, p, guard = TRUE)
+  ggsaveR::ggsave(filename_svg, p, guard = TRUE)
 
   # Assert that the specified file was created
   expect_true(file.exists(filename_svg))
@@ -40,8 +40,8 @@ test_that("guard = TRUE bypasses all ggsaveR enhancements", {
   filename_unique <- "guard_unique_test.png"
 
   # Save the same file twice with `guard = TRUE`
-  ggsave(filename_unique, p, guard = TRUE)
-  ggsave(filename_unique, p, guard = TRUE)
+  ggsaveR::ggsave(filename_unique, p, guard = TRUE)
+  ggsaveR::ggsave(filename_unique, p, guard = TRUE)
 
   # Assert that the original file exists
   expect_true(file.exists(filename_unique))
@@ -63,11 +63,11 @@ test_that("guard = TRUE bypasses all ggsaveR enhancements", {
   filename_stop <- "guard_stop_test.png"
 
   # Save the file once
-  ggsave(filename_stop, p, guard = TRUE)
+  ggsaveR::ggsave(filename_stop, p, guard = TRUE)
 
   # The second call with `guard = TRUE` should NOT throw an error; it should
   # bypass the "stop" action and simply overwrite the file.
   expect_no_error(
-    ggsave(filename_stop, p, guard = TRUE)
+    ggsaveR::ggsave(filename_stop, p, guard = TRUE)
   )
 })

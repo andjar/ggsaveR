@@ -12,11 +12,11 @@ test_that("ggsave works with default settings and passes '...' arguments", {
   filename <- "test_core.png"
 
   # Test basic saving
-  ggsave(filename, p)
+  ggsaveR::ggsave(filename, p)
   expect_true(file.exists(filename))
 
   # Test that '...' arguments like width and height are passed
-  ggsave("test_dims.png", p, width = 4, height = 3, units = "in", dpi = 100)
+  ggsaveR::ggsave("test_dims.png", p, width = 4, height = 3, units = "in", dpi = 100)
   img <- png::readPNG("test_dims.png")
 
   # Dimensions should be width * dpi and height * dpi
