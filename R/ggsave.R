@@ -110,8 +110,57 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ...) {
     ggsave_args$author <- creator
   }
 
-  # --- 2. Handle multiple devices ---
-  # If device is not specified, infer from filename extension
+  # --- 2. Handle multiple devices/dimensions ---
+  # Base filename without extension
+  base_filename <- tools::file_path_sans_ext(filename)
+
+  # Check if device is a list for multiple dimensions
+  if (is.list(device) && !is.data.frame(device)) {
+    # Nested list for multiple formats and dimensions
+    saved_files <- character(length(device))
+    for (i in seq_along(device)) {
+      format_opts <- device[[i]]
+      dev <- format_opts$filetype
+      width <- format_opts$width
+      height <- format_opts$height
+      units <- format_opts$units %||% "in" # Default units to inches if not specified
+
+      # Construct filename with dimensions for uniqueness if needed
+      current_filename <- paste0(base_filename, "_", width, "x", height, ".", dev)
+
+      # Update ggsave_args with specific dimensions
+      ggsave_args$width <- width
+      ggsave_args$height <- height
+      ggsave_args$units <- units
+
+      # Handle file overwriting for this specific file
+      if (file.exists(current_filename)) {
+        if (overwrite_action == "stop") {
+          stop("File '", current_filename, "' already exists.", call. = FALSE)
+        } else if (overwrite_action == "unique") {
+          current_filename <- unique_filename(current_filename)
+        }
+      }
+
+      # Use the original ggsave for all other cases
+       ggsave_args_final <- c(list(filename = current_filename, plot = plot, device = dev), ggsave_args)
+      # Special handling for certain devices if necessary
+      if (dev %in% c("jpg", "jpeg")) {
+        ggsave_args_final$device <- "jpeg"
+      } else if (dev == "tiff") {
+        ggsave_args_final$device <- "tiff"
+      } else if (dev == "eps") {
+        ggsave_args_final$device <- "eps"
+      }
+      do.call(ggplot2::ggsave, ggsave_args_final)
+
+      saved_files[i] <- current_filename
+    }
+    invisible(saved_files)
+    return(invisible(saved_files))
+  }
+
+  # Fallback to original logic for simple vector of devices
   if (is.null(device)) {
     device <- tolower(tools::file_ext(filename))
     if (device == "") {
@@ -120,16 +169,10 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ...) {
   }
 
   devices <- device
-
-  # Base filename without extension
-  base_filename <- tools::file_path_sans_ext(filename)
-
   saved_files <- character(length(devices))
 
   for (i in seq_along(devices)) {
     dev <- devices[i]
-
-    # Construct the full filename for this device
     current_filename <- paste0(base_filename, ".", dev)
 
     # --- 3. Handle file overwriting ---
@@ -155,11 +198,16 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ...) {
       )
     } else {
       # Use the original ggsave for all other cases
-      do.call(
-        ggplot2::ggsave,
-        c(list(filename = current_filename, plot = plot, device = dev),
-          ggsave_args)
-      )
+      ggsave_args_final <- c(list(filename = current_filename, plot = plot, device = dev), ggsave_args)
+      # Special handling for certain devices if necessary
+      if (dev %in% c("jpg", "jpeg")) {
+        ggsave_args_final$device <- "jpeg"
+      } else if (dev == "tiff") {
+        ggsave_args_final$device <- "tiff"
+      } else if (dev == "eps") {
+        ggsave_args_final$device <- "eps"
+      }
+      do.call(ggplot2::ggsave, ggsave_args_final)
     }
 
     saved_files[i] <- current_filename
