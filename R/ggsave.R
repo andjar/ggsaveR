@@ -48,7 +48,7 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
 
   # Add custom, machine-readable data blob for reproducibility
   if (isTRUE(embed_data)) {
-    message("Embedding reproducibility data into '", filename, "'.")
+    message("Embedded reproducibility data into ", basename(filename))
     repro_data <- list(
       ggsaveR_version = packageVersion("ggsaveR"),
       plot_call = plot_call_str,
@@ -67,8 +67,12 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
   # --- 2. Render the plot to a raster array in memory ---
   # We pass ggsave args like width, height, dpi, etc., to ragg::agg_png.
   ggsave_args <- list(...)
+  
+  # Use a temporary file for ragg rendering since it doesn't support direct memory output
+  tmp_ragg_file <- tempfile(fileext = ".png")
+  
   render_args <- list(
-    filename = NULL, # This is key: tells ragg to return the raster, not save to file
+    filename = tmp_ragg_file,
     width = ggsave_args$width %||% 7,
     height = ggsave_args$height %||% 7,
     units = ggsave_args$units %||% "in",
@@ -88,16 +92,23 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
       background = render_args$background
     )
     print(plot)
-    invisible(dev.off())
+    dev.off()
+    
+    # Read the temporary file and clean up
+    raster_data <- png::readPNG(tmp_ragg_file)
+    unlink(tmp_ragg_file)
+    raster_data
   }, error = function(e) {
     # Ensure device is closed on error
     if (dev.cur() != 1) dev.off()
+    # Clean up temp file
+    if (file.exists(tmp_ragg_file)) unlink(tmp_ragg_file)
     stop("Failed to render plot in memory using {ragg}: ", e$message, call. = FALSE)
   })
 
   # --- 3. Write the final PNG with the plot image and metadata ---
   tryCatch({
-    png::writePNG(image = captured_plot, target = filename, metadata = text_chunks)
+    png::writePNG(image = captured_plot, target = filename, text = text_chunks)
     message("Successfully saved '", filename, "' with metadata.")
   }, error = function(e) {
     stop("Failed to write final PNG file '", filename, "': ", e$message, call. = FALSE)
@@ -130,7 +141,14 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ..., guard = FAL
   saved_files <- character()
   base_filename <- tools::file_path_sans_ext(filename)
 
-  # Function to handle a single save operation
+# Filter out arguments that shouldn't be passed to ggplot2::ggsave
+filter_ggplot2_args <- function(args) {
+  # List of arguments that are specific to ggsaveR and shouldn't be passed to ggplot2::ggsave
+  ggsaveR_args <- c("embed_data", "creator", "author")
+  args[!names(args) %in% ggsaveR_args]
+}
+
+# Function to handle a single save operation
   # This avoids code duplication between the two main branches
   process_single_save <- function(dev, current_filename, args) {
 
@@ -148,13 +166,14 @@ ggsave <- function(filename, plot = last_plot(), device = NULL, ..., guard = FAL
       # Fallback to standard ggsave for other formats (e.g., PDF, SVG)
       # or for PNGs when no metadata is being added.
 
-      # For other formats, inject creator if possible.
-      # ggplot2::ggsave passes 'author' to pdf(), but not other devices.
-      if (!is.null(creator) && !("author" %in% names(args))) {
-        args$author <- creator
-      }
+      # Filter out ggsaveR-specific arguments
+      filtered_args <- filter_ggplot2_args(args)
 
-      do.call(ggplot2::ggsave, c(list(filename = current_filename, plot = plot, device = dev), args))
+      # Note: Most devices don't support metadata like 'author'. For PDF, postscript, etc.
+      # we can't inject creator metadata through ggplot2::ggsave device arguments.
+      # This is a limitation of the underlying graphics devices.
+
+      do.call(ggplot2::ggsave, c(list(filename = current_filename, plot = plot, device = dev), filtered_args))
     }
   }
 
