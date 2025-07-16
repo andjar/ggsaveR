@@ -1,0 +1,74 @@
+---
+title: "Getting Started with ggsaveR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with ggsaveR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+The `ggsaveR` package is designed to supercharge `ggplot2::ggsave()` without requiring you to change your existing code. This vignette will walk you through the simplest, most common use case: making `ggsave()` better with a single line of code.
+
+## The Problem
+
+Imagine you have an analysis script that saves several plots.
+
+```{r}
+library(ggplot2)
+
+# Create a plot
+p <- ggplot(mtcars, aes(mpg, wt)) +
+  geom_point() +
+  labs(title = "Fuel Efficiency vs. Weight")
+
+# Save the plot
+# In a real script, you might save this in a 'figures' directory
+# ggsave("figures/mpg_vs_wt.png", p)
+```
+
+If you want to change how the plot is saved—for example, to add a PDF version for a publication—you would normally have to find and modify every `ggsave()` call.
+
+## The `ggsaveR` Solution
+
+With `ggsaveR`, you can set global options to control the behavior of all subsequent `ggsave()` calls.
+
+First, load the `ggsaveR` library.
+
+```{r}
+library(ggsaveR)
+```
+
+Now, let's say you want every plot to be saved as both a PNG and a PDF. You can set the `ggsaveR.formats` option at the top of your script.
+
+```{r}
+options(ggsaveR.formats = list(
+  list(device = "png", dpi = 300),
+  list(device = "pdf")
+))
+```
+
+Now, when you call `ggsave()`, it will automatically save to both formats. The file extension in the `filename` argument is used as the base name.
+
+```{r, eval=FALSE}
+# This single call will create both "mpg_vs_wt.png" and "mpg_vs_wt.pdf"
+ggsave("mpg_vs_wt.png", p)
+```
+
+This simple setup allows you to enhance all plot-saving operations in an existing project by adding just two lines of code to the top of your script.
+
+To clean up, you can reset the option to `NULL`.
+
+```{r}
+options(ggsaveR.formats = NULL)
+```
+
+This vignette has shown the most basic feature of `ggsaveR`. The other vignettes in this series will explore more advanced capabilities.
