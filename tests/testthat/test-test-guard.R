@@ -1,6 +1,6 @@
 library(testthat)
 library(ggplot2)
-# library(ggsaveR) # testthat loads this automatically
+library(ggsaveR) # Load ggsaveR after ggplot2 to ensure ggsave is masked correctly
 
 # A simple plot object for use in all tests
 p <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) +
