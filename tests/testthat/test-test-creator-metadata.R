@@ -6,7 +6,7 @@ test_that("Creator metadata is added to PNG files", {
   ggsave(filename, p)
 
   # Read PNG metadata
-  img_meta <- png::readPNG(filename, metadata = TRUE)
+  img_meta <- png::readPNG(filename, info = TRUE)
   metadata <- attr(img_meta, "metadata")
 
   expect_equal(metadata$Author, test_creator)
@@ -37,7 +37,7 @@ test_that("User-provided 'author' argument overrides the option", {
   # so it should still use the option value. This is expected behavior.
   filename_png <- "creator_no_override.png"
   ggsave(filename_png, p, author = "Override Author")
-  img_meta <- png::readPNG(filename_png, metadata = TRUE)
+  img_meta <- png::readPNG(filename_png, info = TRUE)
   metadata <- attr(img_meta, "metadata")
 
   expect_equal(metadata$Author, "Option Creator")

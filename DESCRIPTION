@@ -18,10 +18,10 @@ Imports:
     base64enc,
     tools,
     ragg,
-    rlang,
-    exiftoolr
+    rlang
 Suggests:
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    withr
 Config/testthat/edition: 3
