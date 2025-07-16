@@ -17,7 +17,9 @@ Imports:
     png (>= 0.1-8),
     base64enc,
     tools,
-    rlang
+    ragg,
+    rlang,
+    exiftoolr
 Suggests:
     testthat (>= 3.0.0),
     knitr,

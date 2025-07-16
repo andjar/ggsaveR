@@ -1,37 +1,57 @@
-#' Read embedded data from a ggsaveR-generated PNG file
+# read_data.R
+
+#' @importFrom tools file_ext
+#' @importFrom png readPNG
+#' @importFrom base64enc base64decode
+
+#' @title Read embedded reproducibility data from a ggsaveR-generated file
 #'
-#' This function extracts the reproducibility data (e.g., ggplot object,
-#' data frame) that was embedded in a PNG file by `ggsaveR::ggsave()`.
+#' @description This function extracts reproducibility data embedded in a file by
+#' `ggsaveR::ggsave()`. It is optimized to read `tEXt` chunks from PNG
+#' files natively.
 #'
-#' @param path The path to the PNG file.
-#' @return A list containing the embedded R objects (e.g., 'plot_object',
-#'   'plot_data', 'session_info'). Returns `NULL` if no ggsaveR data is found.
+#' @param path The path to the file.
+#' @return A list containing the embedded R objects (e.g., 'plot_call',
+#' 'session_info'). Returns `NULL` if no `ggsaveR` data is found.
 #' @export
 read_ggsaveR_data <- function(path) {
   if (!file.exists(path)) {
     stop("File not found: ", path, call. = FALSE)
   }
 
-  if (tolower(tools::file_ext(path)) != "png") {
-    stop("Data embedding is only supported for PNG files.", call. = FALSE)
-  }
+  dev <- tolower(tools::file_ext(path))
 
-  # Read the PNG. The metadata is automatically attached as an attribute
-  # by the png package, so we don't need a special argument.
-  img <- png::readPNG(path, native = FALSE)
-
-  # Retrieve the metadata from the object's attributes
-  metadata <- attr(img, "metadata")
-
-  if (is.null(metadata) || is.null(metadata$ggsaveR_data)) {
-    warning("No ggsaveR metadata found in this PNG file.", call. = FALSE)
+  if (dev != "png") {
+    warning(
+      "This function is currently optimized for reading ggsaveR data from PNG files. ",
+      "Support for other formats is not yet implemented in this version.", call. = FALSE
+    )
     return(NULL)
   }
 
-  # Decode and unserialize the data
-  encoded_data <- metadata$ggsaveR_data
-  serialized_data <- base64enc::base64decode(encoded_data)
-  unserialized_data <- unserialize(serialized_data)
+  tryCatch({
+    # readPNG with info=TRUE gets metadata without reading the large image raster
+    png_info <- png::readPNG(path, info = TRUE)
 
-  return(unserialized_data)
+    # The metadata is in the 'text' attribute
+    text_chunks <- attr(png_info, "text", exact = TRUE)
+
+    if (is.null(text_chunks) || is.null(text_chunks$ggsaveR_data)) {
+      warning("No ggsaveR_data chunk found in this PNG file.", call. = FALSE)
+      return(NULL)
+    }
+
+    encoded_data <- text_chunks$ggsaveR_data
+
+    # Reverse the pipeline: Base64 Decode -> Decompress -> Unserialize
+    compressed_data <- base64enc::base64decode(encoded_data)
+    serialized_data <- memDecompress(compressed_data, type = "gzip")
+    unserialized_data <- unserialize(serialized_data)
+
+    return(unserialized_data)
+
+  }, error = function(e) {
+    warning("Could not read metadata from '", path, "'. It may not be a valid PNG or may be corrupt. Error: ", e$message)
+    return(NULL)
+  })
 }
