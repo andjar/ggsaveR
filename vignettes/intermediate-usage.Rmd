@@ -1,0 +1,103 @@
+---
+title: "Intermediate Usage of ggsaveR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Intermediate Usage of ggsaveR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+This vignette builds on the basics covered in "Getting Started with ggsaveR" and explores more advanced features, such as saving plots in multiple dimensions and preventing accidental file overwrites.
+
+```{r}
+library(ggplot2)
+library(ggsaveR)
+
+# Create a sample plot
+p <- ggplot(iris, aes(Sepal.Length, Petal.Length, color = Species)) +
+  geom_point() +
+  labs(title = "Sepal Length vs. Petal Length")
+```
+
+## Saving Multiple Formats and Dimensions
+
+In the previous vignette, we saw how to save a plot in multiple formats. The `ggsaveR.formats` option is highly flexible and allows you to specify different dimensions, resolutions, and other parameters for each file.
+
+Let's define a set of formats for different purposes: a high-resolution PNG for a presentation, a PDF for a manuscript, and an SVG for web use.
+
+```{r}
+options(ggsaveR.formats = list(
+  # A high-res PNG for presentations
+  list(device = "png", width = 8, height = 5, units = "in", dpi = 300),
+  # A PDF for a manuscript, with dimensions in centimeters
+  list(device = "pdf", width = 18, height = 11, units = "cm"),
+  # An SVG for web/editing
+  list(device = "svg", width = 7, height = 4.5)
+))
+```
+
+Now, a single `ggsave()` call will generate all three files with their respective specifications. The original file extension is ignored, and the `filename` is used as a base name.
+
+```{r, eval=FALSE}
+# This creates "iris_plot.png", "iris_plot.pdf", and "iris_plot.svg"
+ggsave("outputs/iris_plot.png", p)
+```
+
+```{r}
+# Reset the option
+options(ggsaveR.formats = NULL)
+```
+
+## Preventing File Overwrites
+
+During a long analysis, you might accidentally overwrite a critical plot. `ggsaveR` provides the `ggsaveR.overwrite_action` option to control this behavior.
+
+The default is `"overwrite"`, which mimics the standard `ggplot2::ggsave` behavior.
+
+### Stop on Existing File
+
+Set the option to `"stop"` to throw an error if the file already exists. This is useful for preventing accidental overwrites in critical scripts.
+
+```{r, eval = FALSE}
+options(ggsaveR.overwrite_action = "stop")
+
+# This will work the first time
+ggsave("critical_plot.png", p)
+
+# If you run it again, it will throw an error
+# ggsave("critical_plot.png", p)
+# Error: File 'critical_plot.png' already exists and ggsaveR.overwrite_action is set to 'stop'.
+```
+
+### Create a Unique Filename
+
+Alternatively, you can set the option to `"unique"` to automatically generate a new filename if the intended one already exists. This is useful for iterative analyses where you want to keep all versions of a plot.
+
+```{r, eval = FALSE}
+options(ggsaveR.overwrite_action = "unique")
+
+# Run this once: creates "versioned_plot.png"
+ggsave("versioned_plot.png", p)
+
+# Run this again: creates "versioned_plot-1.png"
+ggsave("versioned_plot.png", p)
+
+# And again: creates "versioned_plot-2.png"
+ggsave("versioned_plot.png", p)
+```
+
+```{r}
+# Reset to default
+options(ggsaveR.overwrite_action = "overwrite")
+```
+
+These intermediate features provide a much finer level of control over how your plots are saved, helping to streamline your workflow and protect your work.
