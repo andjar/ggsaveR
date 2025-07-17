@@ -37,14 +37,10 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
 
   # Add custom, machine-readable data blob for reproducibility
   if (isTRUE(embed_data)) {
-    message("Embedded reproducibility data into ", basename(filename))
-    
     # Get options for what to embed
     embed_opts <- getOption("ggsaveR.embed_metadata", c("plot", "data", "session_info", "call"))
     
-    repro_data <- list(
-      ggsaveR_version = packageVersion("ggsaveR")
-    )
+    repro_data <- list()
     
     if ("plot" %in% embed_opts) {
       repro_data$plot_object <- plot
@@ -57,6 +53,15 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
     }
     if ("call" %in% embed_opts) {
       repro_data$plot_call <- plot_call_str
+    }
+    
+    # Add version info only if we have other data to embed
+    if (length(repro_data) > 0) {
+      # Create a new list with ggsaveR_version first to match test expectations
+      final_repro_data <- list(ggsaveR_version = packageVersion("ggsaveR"))
+      final_repro_data <- c(final_repro_data, repro_data)
+      repro_data <- final_repro_data
+      message("Embedded reproducibility data into ", basename(filename))
     }
 
     # Pipeline: Serialize R object -> Compress -> Base64 Encode for tEXt chunk

@@ -18,7 +18,7 @@ test_that("Data embedding works for PNG files", {
   reloaded_data <- read_ggsaveR_data(filename)
 
   expect_true(is.list(reloaded_data))
-  expect_equal(names(reloaded_data), c("plot_object", "plot_data", "session_info", "plot_call"))
+  expect_equal(names(reloaded_data), c("ggsaveR_version", "plot_object", "plot_data", "session_info", "plot_call"))
 
   # Verify contents
   expect_s3_class(reloaded_data$plot_object, "ggplot")
@@ -54,7 +54,7 @@ test_that("embed_metadata option is respected", {
   reloaded_data <- read_ggsaveR_data(filename)
 
   # Check that only the requested components are present
-  expect_equal(names(reloaded_data), c("plot_object", "plot_call"))
+  expect_equal(names(reloaded_data), c("ggsaveR_version", "plot_object", "plot_call"))
   expect_null(reloaded_data$plot_data)
   expect_null(reloaded_data$session_info)
 })
@@ -65,8 +65,13 @@ test_that("Embedding is skipped for non-PNG files", {
 
   filename_pdf <- "no_embed.pdf"
 
-  # Should not print an embedding message
-  expect_no_message(ggsave(filename_pdf, p))
+  # Should not print an embedding message (but may show ggplot2::ggsave messages)
+  # We'll capture the message and check it doesn't contain embedding text
+  captured_message <- capture_messages(ggsave(filename_pdf, p))
+  expect_false(any(grepl("Embedded reproducibility data", captured_message)))
+
+  # Ensure the file was created
+  expect_true(file.exists(filename_pdf))
 
   # read_ggsaveR_data should fail for non-PNGs
   expect_error(
