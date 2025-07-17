@@ -132,10 +132,40 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
 ggsave <- function(filename, plot = last_plot(), device = NULL, ..., guard = FALSE) {
 
   if (isTRUE(guard)) {
+    # Create a clean call to ggplot2::ggsave without ggsaveR-specific arguments
     call <- match.call()
     call$guard <- NULL
     call[[1]] <- quote(ggplot2::ggsave)
-    return(eval.parent(call))
+    
+    # Remove any ggsaveR-specific arguments from the dots
+    dots <- list(...)
+    ggsaveR_args <- c("embed_data", "creator", "author", "guard")
+    for (arg in ggsaveR_args) {
+      if (arg %in% names(dots)) {
+        call[[arg]] <- NULL
+      }
+    }
+    
+    # Create a new call with only the arguments that ggplot2::ggsave accepts
+    clean_call <- call("ggsave")
+    clean_call$filename <- call$filename
+    clean_call$plot <- call$plot
+    if (!is.null(call$device)) clean_call$device <- call$device
+    
+    # Add any remaining arguments that are not ggsaveR-specific
+    for (i in seq_along(call)) {
+      arg_name <- names(call)[i]
+      if (!is.null(arg_name) && !arg_name %in% c("", "filename", "plot", "device", ggsaveR_args)) {
+        clean_call[[arg_name]] <- call[[i]]
+      }
+    }
+    
+    # Use the actual ggplot2::ggsave function
+    return(do.call(ggplot2::ggsave, as.list(clean_call)[-1]))
+    
+
+    
+    return(eval.parent(clean_call))
   }
 
   plot_arg <- substitute(plot)
