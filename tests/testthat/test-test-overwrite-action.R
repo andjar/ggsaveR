@@ -1,5 +1,6 @@
 test_that("overwrite_action = 'unique' works correctly", {
-  withr::local_dir(tempdir())
+  withr::local_dir(file.path(tempdir(), "unique_test"))
+  dir.create(getwd(), showWarnings = FALSE, recursive = TRUE)
   withr::local_options(list(ggsaveR.overwrite_action = "unique"))
 
   filename <- "unique_test.png"
@@ -19,7 +20,8 @@ test_that("overwrite_action = 'unique' works correctly", {
 })
 
 test_that("overwrite_action = 'stop' works correctly", {
-  withr::local_dir(tempdir())
+  withr::local_dir(file.path(tempdir(), "stop_test"))
+  dir.create(getwd(), showWarnings = FALSE, recursive = TRUE)
   withr::local_options(list(ggsaveR.overwrite_action = "stop"))
 
   filename <- "stop_test.png"
@@ -33,7 +35,8 @@ test_that("overwrite_action = 'stop' works correctly", {
 })
 
 test_that("overwrite_action = 'overwrite' works correctly (default)", {
-  withr::local_dir(tempdir())
+  withr::local_dir(file.path(tempdir(), "overwrite_test"))
+  dir.create(getwd(), showWarnings = FALSE, recursive = TRUE)
   withr::local_options(list(ggsaveR.overwrite_action = "overwrite"))
 
   filename <- "overwrite_test.png"

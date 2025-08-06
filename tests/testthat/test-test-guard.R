@@ -7,7 +7,8 @@ p <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x, y)) +
   ggplot2::geom_point()
 
 test_that("guard = TRUE bypasses all ggsaveR enhancements", {
-  withr::local_dir(tempdir())
+  withr::local_dir(file.path(tempdir(), "guard_test"))
+  dir.create(getwd(), showWarnings = FALSE, recursive = TRUE)
 
   # --- Test Case 1: `guard` should ignore the `ggsaveR.formats` option ---
 

@@ -164,7 +164,7 @@ filter_ggplot2_args <- function(args) {
 
 # Function to handle a single save operation
   # This avoids code duplication between the two main branches
-  process_single_save <- function(dev, current_filename, args) {
+  process_single_save <- function(dev, current_filename, args, plot_obj) {
 
     # Handle data embedding for PNGs vs. other formats
     is_png <- tolower(dev) == "png"
@@ -173,7 +173,7 @@ filter_ggplot2_args <- function(args) {
       # Use our special native PNG handler
       do.call(
         save_png_with_data,
-        c(list(filename = current_filename, plot = plot, plot_call_str = plot_call_str,
+        c(list(filename = current_filename, plot = plot_obj, plot_call_str = plot_call_str,
                creator = creator, embed_data = embed_data), args)
       )
     } else {
@@ -187,7 +187,7 @@ filter_ggplot2_args <- function(args) {
       # we can't inject creator metadata through ggplot2::ggsave device arguments.
       # This is a limitation of the underlying graphics devices.
 
-      do.call(ggplot2::ggsave, c(list(filename = current_filename, plot = plot, device = dev), filtered_args))
+      do.call(ggplot2::ggsave, c(list(filename = current_filename, plot = plot_obj, device = dev), filtered_args))
     }
   }
 
@@ -206,7 +206,7 @@ filter_ggplot2_args <- function(args) {
       }
 
       final_args <- c(user_args, fmt_config)
-      process_single_save(dev, current_filename, final_args)
+      process_single_save(dev, current_filename, final_args, plot)
       saved_files <- c(saved_files, current_filename)
     }
   } else {
@@ -219,11 +219,15 @@ filter_ggplot2_args <- function(args) {
     for (dev in devices) {
       current_filename <- paste0(base_filename, ".", dev)
       if (file.exists(current_filename)) {
-        if (overwrite_action == "stop") stop("File '", current_filename, "' already exists.", call. = FALSE)
-        if (overwrite_action == "unique") current_filename <- unique_filename(current_filename)
+        if (overwrite_action == "stop") {
+          stop("File '", current_filename, "' already exists.", call. = FALSE)
+        }
+        if (overwrite_action == "unique") {
+          current_filename <- unique_filename(current_filename)
+        }
       }
 
-      process_single_save(dev, current_filename, user_args)
+      process_single_save(dev, current_filename, user_args, plot)
       saved_files <- c(saved_files, current_filename)
     }
   }
