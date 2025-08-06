@@ -1,9 +1,16 @@
 test_that("overwrite_action = 'unique' works correctly", {
   withr::local_dir(file.path(tempdir(), "unique_test"))
   dir.create(getwd(), showWarnings = FALSE, recursive = TRUE)
+  
+  # Clean up any existing test files
+  unlink("unique_test*.png")
+  
   withr::local_options(list(ggsaveR.overwrite_action = "unique"))
 
   filename <- "unique_test.png"
+
+  # Verify clean state
+  expect_false(file.exists(filename))
 
   # First save
   ggsave(filename, p)
@@ -15,17 +22,27 @@ test_that("overwrite_action = 'unique' works correctly", {
     "File exists. Saving to unique_test-1.png instead."
   )
 
-  # Check that the new file exists
+  # Check that both files exist
+  expect_true(file.exists(filename))
   expect_true(file.exists("unique_test-1.png"))
 })
 
 test_that("overwrite_action = 'stop' works correctly", {
   withr::local_dir(file.path(tempdir(), "stop_test"))
   dir.create(getwd(), showWarnings = FALSE, recursive = TRUE)
+  
+  # Clean up any existing test files
+  unlink("stop_test*.png")
+  
   withr::local_options(list(ggsaveR.overwrite_action = "stop"))
 
   filename <- "stop_test.png"
+  
+  # Verify clean state
+  expect_false(file.exists(filename))
+  
   ggsave(filename, p) # First save
+  expect_true(file.exists(filename))
 
   # Second save should throw an error
   expect_error(
