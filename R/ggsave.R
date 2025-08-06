@@ -132,40 +132,14 @@ save_png_with_data <- function(filename, plot, plot_call_str, creator, embed_dat
 ggsave <- function(filename, plot = last_plot(), device = NULL, ..., guard = FALSE) {
 
   if (isTRUE(guard)) {
-    # Create a clean call to ggplot2::ggsave without ggsaveR-specific arguments
-    call <- match.call()
-    call$guard <- NULL
-    call[[1]] <- quote(ggplot2::ggsave)
-    
-    # Remove any ggsaveR-specific arguments from the dots
+    # When guard = TRUE, bypass all ggsaveR enhancements and use ggplot2::ggsave directly
+    # Remove ggsaveR-specific arguments from the dots
     dots <- list(...)
     ggsaveR_args <- c("embed_data", "creator", "author", "guard")
-    for (arg in ggsaveR_args) {
-      if (arg %in% names(dots)) {
-        call[[arg]] <- NULL
-      }
-    }
+    clean_dots <- dots[!names(dots) %in% ggsaveR_args]
     
-    # Create a new call with only the arguments that ggplot2::ggsave accepts
-    clean_call <- call("ggsave")
-    clean_call$filename <- call$filename
-    clean_call$plot <- call$plot
-    if (!is.null(call$device)) clean_call$device <- call$device
-    
-    # Add any remaining arguments that are not ggsaveR-specific
-    for (i in seq_along(call)) {
-      arg_name <- names(call)[i]
-      if (!is.null(arg_name) && !arg_name %in% c("", "filename", "plot", "device", ggsaveR_args)) {
-        clean_call[[arg_name]] <- call[[i]]
-      }
-    }
-    
-    # Use the actual ggplot2::ggsave function
-    return(do.call(ggplot2::ggsave, as.list(clean_call)[-1]))
-    
-
-    
-    return(eval.parent(clean_call))
+    # Call ggplot2::ggsave directly with the cleaned arguments
+    return(do.call(ggplot2::ggsave, c(list(filename = filename, plot = plot, device = device), clean_dots)))
   }
 
   plot_arg <- substitute(plot)
@@ -190,7 +164,7 @@ filter_ggplot2_args <- function(args) {
 
 # Function to handle a single save operation
   # This avoids code duplication between the two main branches
-  process_single_save <- function(dev, current_filename, args) {
+  process_single_save <- function(dev, current_filename, args, plot_obj) {
 
     # Handle data embedding for PNGs vs. other formats
     is_png <- tolower(dev) == "png"
@@ -199,7 +173,7 @@ filter_ggplot2_args <- function(args) {
       # Use our special native PNG handler
       do.call(
         save_png_with_data,
-        c(list(filename = current_filename, plot = plot, plot_call_str = plot_call_str,
+        c(list(filename = current_filename, plot = plot_obj, plot_call_str = plot_call_str,
                creator = creator, embed_data = embed_data), args)
       )
     } else {
@@ -213,7 +187,7 @@ filter_ggplot2_args <- function(args) {
       # we can't inject creator metadata through ggplot2::ggsave device arguments.
       # This is a limitation of the underlying graphics devices.
 
-      do.call(ggplot2::ggsave, c(list(filename = current_filename, plot = plot, device = dev), filtered_args))
+      do.call(ggplot2::ggsave, c(list(filename = current_filename, plot = plot_obj, device = dev), filtered_args))
     }
   }
 
@@ -232,7 +206,7 @@ filter_ggplot2_args <- function(args) {
       }
 
       final_args <- c(user_args, fmt_config)
-      process_single_save(dev, current_filename, final_args)
+      process_single_save(dev, current_filename, final_args, plot)
       saved_files <- c(saved_files, current_filename)
     }
   } else {
@@ -245,11 +219,15 @@ filter_ggplot2_args <- function(args) {
     for (dev in devices) {
       current_filename <- paste0(base_filename, ".", dev)
       if (file.exists(current_filename)) {
-        if (overwrite_action == "stop") stop("File '", current_filename, "' already exists.", call. = FALSE)
-        if (overwrite_action == "unique") current_filename <- unique_filename(current_filename)
+        if (overwrite_action == "stop") {
+          stop("File '", current_filename, "' already exists.", call. = FALSE)
+        }
+        if (overwrite_action == "unique") {
+          current_filename <- unique_filename(current_filename)
+        }
       }
 
-      process_single_save(dev, current_filename, user_args)
+      process_single_save(dev, current_filename, user_args, plot)
       saved_files <- c(saved_files, current_filename)
     }
   }
