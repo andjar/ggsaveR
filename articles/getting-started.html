@@ -71,7 +71,7 @@
 <p>The <code>ggsaveR</code> package is designed to supercharge
 <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code> without requiring you to change your
 existing code. This vignette will walk you through the simplest, most
-common use case: making <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code> better with a single line
+common use case: making <code><a href="../reference/ggsave.html">ggsave()</a></code> better with a single line
 of code.</p>
 </div>
 <div class="section level2">
@@ -91,13 +91,13 @@ of code.</p>
 <span><span class="co"># ggsave("figures/mpg_vs_wt.png", p)</span></span></code></pre></div>
 <p>If you want to change how the plot is saved—for example, to add a PDF
 version for a publication—you would normally have to find and modify
-every <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code> call.</p>
+every <code><a href="../reference/ggsave.html">ggsave()</a></code> call.</p>
 </div>
 <div class="section level2">
 <h2 id="the-ggsaver-solution">The <code>ggsaveR</code> Solution<a class="anchor" aria-label="anchor" href="#the-ggsaver-solution"></a>
 </h2>
 <p>With <code>ggsaveR</code>, you can set global options to control the
-behavior of all subsequent <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code> calls.</p>
+behavior of all subsequent <code><a href="../reference/ggsave.html">ggsave()</a></code> calls.</p>
 <p>First, load the <code>ggsaveR</code> library.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://andjar.github.io/ggsaveR/">ggsaveR</a></span><span class="op">)</span></span>
@@ -114,12 +114,12 @@ your script.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"png"</span>, dpi <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"pdf"</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Now, when you call <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code>, it will automatically save
+<p>Now, when you call <code><a href="../reference/ggsave.html">ggsave()</a></code>, it will automatically save
 to both formats. The file extension in the <code>filename</code>
 argument is used as the base name.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># This single call will create both "mpg_vs_wt.png" and "mpg_vs_wt.pdf"</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="st">"mpg_vs_wt.png"</span>, <span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"mpg_vs_wt.png"</span>, <span class="va">p</span><span class="op">)</span></span></code></pre></div>
 <p>This simple setup allows you to enhance all plot-saving operations in
 an existing project by adding just two lines of code to the top of your
 script.</p>

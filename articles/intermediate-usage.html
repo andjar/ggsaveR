@@ -104,12 +104,12 @@ SVG for web use.</p>
 <span>  <span class="co"># An SVG for web/editing</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"svg"</span>, width <span class="op">=</span> <span class="fl">7</span>, height <span class="op">=</span> <span class="fl">4.5</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Now, a single <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave()</a></code> call will generate all three
+<p>Now, a single <code><a href="../reference/ggsave.html">ggsave()</a></code> call will generate all three
 files with their respective specifications. The original file extension
 is ignored, and the <code>filename</code> is used as a base name.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># This creates "iris_plot.png", "iris_plot.pdf", and "iris_plot.svg"</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="st">"outputs/iris_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"outputs/iris_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Reset the option</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.formats <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
@@ -133,7 +133,7 @@ critical scripts.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.overwrite_action <span class="op">=</span> <span class="st">"stop"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># This will work the first time</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="st">"critical_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"critical_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># If you run it again, it will throw an error</span></span>
 <span><span class="co"># ggsave("critical_plot.png", p)</span></span>
@@ -150,13 +150,13 @@ versions of a plot.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.overwrite_action <span class="op">=</span> <span class="st">"unique"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Run this once: creates "versioned_plot.png"</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="st">"versioned_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"versioned_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Run this again: creates "versioned_plot-1.png"</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="st">"versioned_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"versioned_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># And again: creates "versioned_plot-2.png"</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggsave</a></span><span class="op">(</span><span class="st">"versioned_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"versioned_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Reset to default</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.overwrite_action <span class="op">=</span> <span class="st">"overwrite"</span><span class="op">)</span></span></code></pre></div>
