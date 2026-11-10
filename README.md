@@ -1,8 +1,8 @@
 # ggsaveR 🚀
 
 <!-- badges: start -->
-  [![R-CMD-check](https://github.com/andjar/ggsaveR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/andjar/ggsaveR/actions/workflows/R-CMD-check.yaml)
-  <!-- badges: end -->
+[![R-CMD-check](https://github.com/andjar/ggsaveR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/andjar/ggsaveR/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
 **`ggsaveR` supercharges `ggplot2::ggsave()` without changing your code.** ✨
 
@@ -24,10 +24,10 @@ With the standard `ggplot2::ggsave()`, you would have to go back and modify ever
 | ------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | **Save a plot**                       | ✅ `ggsave("plot.png")`                           | ✅ `ggsave("plot.png")` (Works as a drop-in replacement)                                                |
 | **Save to multiple formats**          | ❌ Requires multiple `ggsave()` calls.          | ✅ **Yes**, in one call, controlled by a global option (`ggsaveR.formats`).                           |
-| **Save in multiple dimensions**       | ❌ Requires multiple `ggsave()` calls.          | ✅ **Yes**, in one call, controlled by a global option (`ggsaveR.formats`).                           |
+| **Save in multiple dimensions**       | ❌ Requires multiple `ggsave()` calls.          | ✅ **Yes**, each format can have its own size and resolution.                                         |
 | **Control file overwriting**          | ❌ Always overwrites existing files.            | ✅ **Yes**, choose to `"overwrite"`, `"stop"`, or create a `"unique"` filename.                       |
 | **Embed reproducibility data**        | ❌ No.                                          | ✅ **Yes**, automatically embed the plot object, generating code, and session info into PNGs.         |
-| **Add author metadata**               | ❌ No direct way.                               | ✅ **Yes**, set a global `ggsaveR.creator` option.                                                    |
+| **Add author metadata**               | ❌ No direct way.                               | ✅ **Yes** (PNG only), set a global `ggsaveR.creator` option.                                         |
 | **Configuration Method**              | Arguments only.                                 | Arguments **and** global `options()`.                                                                 |
 | **Bypass enhancements**               | N/A                                             | ✅ **Yes**, use `guard = TRUE` for a specific call to use the original `ggplot2` behavior.            |
 
@@ -36,9 +36,11 @@ With the standard `ggplot2::ggsave()`, you would have to go back and modify ever
 You can install the development version from GitHub with:
 
 ```r
-# install.packages("remotes")
-remotes::install_github("andjar/ggsaveR")
+# install.packages("pak")
+pak::pak("andjar/ggsaveR")
 ```
+
+SVG output additionally needs the `svglite` package, as it does with `ggplot2`.
 
 ## 🪄 The Magic: Seamless Integration with Existing Projects
 
@@ -70,7 +72,7 @@ To save every plot as both a `png` and a `pdf`, just add two lines at the top of
 # --- my_analysis.R ---
 
 library(ggplot2)
-library(ggsaveR) # 1. Load the library
+library(ggsaveR) # 1. Load the library (before or after ggplot2, the order doesn't matter)
 
 # 2. Set your desired global options
 options(ggsaveR.formats = list(
@@ -125,6 +127,8 @@ ggsave("outputs/my_plot.png", p)
 options(ggsaveR.formats = NULL)
 ```
 
+If all you need is several formats at the default size, a character vector is enough: `options(ggsaveR.formats = c("png", "pdf"))`. Settings in a format take precedence over arguments in the `ggsave()` call; arguments in the call fill in whatever a format leaves out.
+
 ### 2. 🛡️ Prevent File Overwrites
 
 Use `ggsaveR.overwrite_action` to avoid losing work.
@@ -145,33 +149,44 @@ ggsave("safe_plot.png", p)
 options(ggsaveR.overwrite_action = "overwrite")
 ```
 
-You can also set it to `"stop"` to throw an error if the file exists.
+You can also set it to `"stop"` to throw an error if the file exists. When saving several formats at once, `"unique"` gives all files from one call the same suffix, and `"stop"` fails before any file is written.
 
 ### 3. 🧬 Reproducibility: Embed Data in PNGs
 
-When `ggsaveR.embed_data = TRUE`, `ggsaveR` will automatically embed the `ggplot` object, the R code that generated it, and session information directly into the PNG file.
+When `ggsaveR.embed_data = TRUE`, `ggsaveR` will automatically embed the `ggplot` object, its data, the R code passed as the `plot` argument, and session information directly into the PNG file. The image itself is unchanged and opens in any viewer.
 
 ```r
 options(ggsaveR.embed_data = TRUE)
 
-# The plot object and call are captured and embedded in the file's metadata
-ggplot(iris, aes(Sepal.Length, Petal.Length)) +
-  geom_point(aes(color = Species)) |>
-  ggsave("plot_with_data.png")
+# The plot object and the code for it are embedded in the file's metadata
+ggsave(
+  "plot_with_data.png",
+  ggplot(iris, aes(Sepal.Length, Petal.Length)) +
+    geom_point(aes(color = Species))
+)
 
-# You can then retrieve this information later
-# embedded_info <- read_ggsaveR_data("plot_with_data.png")
+# Retrieve the information later, even without the original script
+embedded_info <- read_ggsaveR_data("plot_with_data.png")
 
 # See the captured code
-# cat(embedded_info$plot_call)
-#> ggplot(iris, aes(Sepal.Length, Petal.Length)) +
-#>   geom_point(aes(color = Species))
+cat(embedded_info$plot_call)
+#> ggplot(iris, aes(Sepal.Length, Petal.Length)) + geom_point(aes(color = Species))
 
-# You can even replot the original object
-# embedded_info$plot_object
+# The data behind the plot
+head(embedded_info$plot_data)
+
+# You can even replot or restyle the original object
+embedded_info$plot_object + theme_minimal()
 
 options(ggsaveR.embed_data = FALSE)
 ```
+
+If you save a plot stored in a variable (`ggsave("plot.png", p)`), the captured code is just `p`; the plot object and data are still embedded in full. Use `ggsaveR.embed_metadata` to choose what is embedded, e.g. `options(ggsaveR.embed_metadata = c("data", "call"))`.
+
+> **⚠️ Think before sharing PNGs with embedded data.**
+>
+> -   The file contains the **complete data frame** behind the plot, including columns that are not shown, and for plots created inside a function, every object in that function's environment. Don't publish such files if the data are sensitive, and expect them to be larger. `ggsave()` reports the size of the embedded data.
+> -   `read_ggsaveR_data()` restores a serialized R object. Like `readRDS()` and `load()`, it should only be used on files from a source you trust.
 
 ### 4. 🏃‍♂️ The Escape Hatch: `guard = TRUE`
 
@@ -193,7 +208,24 @@ ggsave("final_figure.png", p, guard = TRUE)
 
 ## ⚙️ Full List of Options
 
--   `ggsaveR.formats`: A `list` of lists, where each inner list defines a file to save (e.g., `list(device = "png", dpi = 300)`).
--   `ggsaveR.overwrite_action`: A character string: `"overwrite"` (default), `"unique"`, or `"stop"`.
--   `ggsaveR.embed_data`: A logical `TRUE`/`FALSE` (default `FALSE`). Controls data embedding in PNGs.
--   `ggsaveR.creator`: A character string to be used as the "Author" in file metadata (e.g., PDF properties).
+| Option                     | Default       | Description                                                                                                                              |
+| -------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `ggsaveR.formats`          | `NULL`        | A character vector of devices, or a `list` of lists that each define a file to save (e.g., `list(device = "png", dpi = 300)`).            |
+| `ggsaveR.overwrite_action` | `"overwrite"` | What to do when a file exists: `"overwrite"`, `"unique"`, or `"stop"`.                                                                    |
+| `ggsaveR.embed_data`       | `FALSE`       | Embed reproducibility data in PNG files.                                                                                                 |
+| `ggsaveR.embed_metadata`   | all four      | Which parts to embed: any of `"plot"`, `"data"`, `"session_info"`, `"call"`.                                                              |
+| `ggsaveR.creator`          | `NULL`        | A string stored as the `Author` text field of PNG files.                                                                                 |
+
+Metadata is only written to PNG files; PDF, SVG and other formats are saved exactly as `ggplot2::ggsave()` would save them.
+
+## 🔍 Differences from `ggplot2::ggsave()`
+
+With no options set, `ggsaveR::ggsave()` behaves like the original, with three small additions:
+
+-   `device` can be a character vector (`device = c("png", "pdf")`) to save several files in one call.
+-   If `filename` has no extension and `device` is a single string, the device is appended as the extension.
+-   The (invisible) return value is a character vector of all files written.
+
+## 📄 License
+
+GPL (>= 3)

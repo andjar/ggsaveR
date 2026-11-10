@@ -31,33 +31,56 @@ For maximum reproducibility, `ggsaveR` can embed the `ggplot` object, the R code
 options(ggsaveR.embed_data = TRUE)
 ```
 
-When this option is `TRUE`, any plot saved as a PNG will contain this extra information. `ggsaveR` captures the plot-generating code, even when using pipes.
+When this option is `TRUE`, any plot saved as a PNG will contain this extra information. `ggsaveR` captures the code passed as the `plot` argument.
 
-```{r, eval=FALSE}
+```{r}
+out <- file.path(tempdir(), "plot_with_embedded_data.png")
+
 # The plot object and the code below are embedded in the PNG file
-iris |>
-  subset(Species != "setosa") |>
-  ggplot(aes(Sepal.Length, Petal.Length)) +
-  geom_point(aes(color = Species)) |>
-  ggsave("plot_with_embedded_data.png")
+ggsave(
+  out,
+  iris |>
+    subset(Species != "setosa") |>
+    ggplot(aes(Sepal.Length, Petal.Length)) +
+    geom_point(aes(color = Species)),
+  width = 6, height = 4
+)
 ```
 
 You can then use the `read_ggsaveR_data()` function to extract this information from the saved PNG.
 
-```{r, eval=FALSE}
+```{r}
 # Read the embedded data
-embedded_info <- read_ggsaveR_data("plot_with_embedded_data.png")
+embedded_info <- read_ggsaveR_data(out)
+names(embedded_info)
 
 # View the code that generated the plot
 cat(embedded_info$plot_call)
-#> iris |>
-#>   subset(Species != "setosa") |>
-#>   ggplot(aes(Sepal.Length, Petal.Length)) +
-#>   geom_point(aes(color = Species))
 
-# You can even replot the original ggplot object
-# embedded_info$plot_object
+# The data behind the plot
+head(embedded_info$plot_data)
 ```
+
+You can even replot, or restyle, the original ggplot object:
+
+```{r, fig.width=6, fig.height=4}
+embedded_info$plot_object + theme_minimal()
+```
+
+If you save a plot that is stored in a variable (`ggsave("plot.png", p)`), the captured code is just the name `p`. The plot object and its data are still embedded in full.
+
+### Choosing what to embed
+
+The `ggsaveR.embed_metadata` option selects the parts to embed: any of `"plot"`, `"data"`, `"session_info"` and `"call"`. For example, to keep files small and only record the code and R session:
+
+```{r, eval=FALSE}
+options(ggsaveR.embed_metadata = c("call", "session_info"))
+```
+
+### Privacy and security
+
+- A PNG with embedded data contains the **complete data frame** behind the plot, including columns that are not shown. For plots created inside a function, the plot object also carries every object in that function's environment. Do not publish such files if the data are sensitive.
+- `read_ggsaveR_data()` restores a serialized R object. Like `readRDS()` and `load()`, only use it on files from a source you trust.
 
 ```{r}
 # Reset the option

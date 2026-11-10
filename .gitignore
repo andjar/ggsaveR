@@ -2,6 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
-docs
 *.Rproj
-ggsaveR.Rcheck/
+docs
+inst/doc
+*.Rcheck/
+*.tar.gz

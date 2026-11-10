@@ -56,7 +56,7 @@ options(ggsaveR.formats = list(
 ))
 ```
 
-Now, when you call `ggsave()`, it will automatically save to both formats. The file extension in the `filename` argument is used as the base name.
+Now, when you call `ggsave()`, it will automatically save to both formats. The file extension in the `filename` argument is replaced by the extension of each format.
 
 ```{r, eval=FALSE}
 # This single call will create both "mpg_vs_wt.png" and "mpg_vs_wt.pdf"
