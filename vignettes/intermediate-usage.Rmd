@@ -57,6 +57,8 @@ ggsave("outputs/iris_plot.png", p)
 options(ggsaveR.formats = NULL)
 ```
 
+Settings in a format take precedence over arguments given in the `ggsave()` call, and arguments in the call fill in whatever a format leaves out. If you only need several formats at the default size, a character vector is enough: `options(ggsaveR.formats = c("png", "pdf"))`.
+
 ## Preventing File Overwrites
 
 During a long analysis, you might accidentally overwrite a critical plot. `ggsaveR` provides the `ggsaveR.overwrite_action` option to control this behavior.
@@ -75,7 +77,7 @@ ggsave("critical_plot.png", p)
 
 # If you run it again, it will throw an error
 # ggsave("critical_plot.png", p)
-# Error: File 'critical_plot.png' already exists and ggsaveR.overwrite_action is set to 'stop'.
+# Error: File 'critical_plot.png' already exists.
 ```
 
 ### Create a Unique Filename

@@ -2,3 +2,19 @@ url: https://andjar.github.io/ggsaveR/
 template:
   bootstrap: 5
 
+reference:
+- title: Saving plots
+  contents:
+  - ggsave
+  - read_ggsaveR_data
+- title: Options
+  contents:
+  - ggsaveR-package
+
+articles:
+- title: Guides
+  navbar: ~
+  contents:
+  - getting-started
+  - intermediate-usage
+  - advanced-techniques
