@@ -1,16 +1,19 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://andjar.github.io/ggsaveR/404.html</loc></url>
+<url><loc>https://andjar.github.io/ggsaveR/CONTRIBUTING.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/LICENSE.html</loc></url>
-<url><loc>https://andjar.github.io/ggsaveR/articles/advanced-techniques.html</loc></url>
-<url><loc>https://andjar.github.io/ggsaveR/articles/getting-started.html</loc></url>
+<url><loc>https://andjar.github.io/ggsaveR/articles/colour-checks.html</loc></url>
+<url><loc>https://andjar.github.io/ggsaveR/articles/ggsaveR.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/articles/index.html</loc></url>
-<url><loc>https://andjar.github.io/ggsaveR/articles/intermediate-usage.html</loc></url>
+<url><loc>https://andjar.github.io/ggsaveR/articles/reproducibility.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/authors.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/index.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/news/index.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/reference/ggsave.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/reference/ggsaveR-package.html</loc></url>
+<url><loc>https://andjar.github.io/ggsaveR/reference/ggsaveR_options.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/reference/index.html</loc></url>
+<url><loc>https://andjar.github.io/ggsaveR/reference/preview_variants.html</loc></url>
 <url><loc>https://andjar.github.io/ggsaveR/reference/read_ggsaveR_data.html</loc></url>
 </urlset>
 

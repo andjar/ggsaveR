@@ -2,6 +2,51 @@
 
 ## ggsaveR (development version)
 
+### New features
+
+- Formats of the same device no longer overwrite each other: when two
+  formats would write to the same file, the size is added to the file
+  names, as in `plot_120x80mm_300dpi.png`. The new option
+  `ggsaveR.size_suffix` adds the size to every file (`TRUE`), only on
+  clashes (`"auto"`, the default) or never (`FALSE`), and a format can
+  carry its own `suffix`.
+- New option `ggsaveR.variants` saves greyscale and simulated colour
+  vision deficiency (deutan, protan, tritan) versions of each plot as
+  PNG files. The new function
+  [`preview_variants()`](https://andjar.github.io/ggsaveR/reference/preview_variants.md)
+  shows them side by side for interactive checks. The simulations use
+  the colorspace package.
+- New option `ggsaveR.dir` saves all plots with a relative file name
+  into one folder, created if needed.
+- New option `ggsaveR.log` appends a row per saved file, with size,
+  resolution, MD5 checksum and plot expression, to a CSV file.
+- New option `ggsaveR.embed_max_size` (default 5 MB) leaves out the plot
+  object and data when they would make a PNG file too large.
+- New function
+  [`ggsaveR_options()`](https://andjar.github.io/ggsaveR/reference/ggsaveR_options.md)
+  sets and checks the options and returns the previous values.
+- [`ggsave()`](https://andjar.github.io/ggsaveR/reference/ggsave.md)
+  gains the `path` argument of
+  [`ggplot2::ggsave()`](https://ggplot2.tidyverse.org/reference/ggsave.html).
+  Previously it was passed through, so the overwrite checks looked at
+  the wrong location.
+
+### Breaking changes
+
+- Embedded data are now stored in separate PNG text chunks: the call and
+  session information as plain text, the data as CSV, and only the plot
+  object as a serialized R object. As a result:
+  - [`read_ggsaveR_data()`](https://andjar.github.io/ggsaveR/reference/read_ggsaveR_data.md)
+    restores the plot object only with `trusted = TRUE`, because
+    unserializing can run arbitrary code. The call, data and session
+    information are always safe to read, also from other languages.
+  - `session_info` is the printed
+    [`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html) as a
+    string, and `plot_data` is read back from CSV. Use
+    `plot_object$data` for the exact data.
+  - Files written by ggsaveR 0.1.0 can still be read with
+    `trusted = TRUE`.
+
 ### Bug fixes
 
 - PNG files with metadata (`ggsaveR.creator` or `ggsaveR.embed_data`)
@@ -29,7 +74,7 @@
   called through [`do.call()`](https://rdrr.io/r/base/do.call.html), the
   recorded call is `<plot object>` rather than the deparsed plot object.
 
-### Improvements
+### Other improvements
 
 - ggsaveR now attaches ggplot2 (it is in `Depends`), so its
   [`ggsave()`](https://andjar.github.io/ggsaveR/reference/ggsave.md)

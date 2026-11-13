@@ -10,8 +10,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="A Wrapper for ggplot2::ggsave with Extra Features">
-<meta name="description" content="A drop-in replacement for ggsave() from ggplot2, configured through global options so that existing scripts need no changes. Saves plots to several formats and sizes at once, embeds the plot object, data and call in PNG files for reproducibility, and protects existing files from being overwritten.">
-<meta property="og:description" content="A drop-in replacement for ggsave() from ggplot2, configured through global options so that existing scripts need no changes. Saves plots to several formats and sizes at once, embeds the plot object, data and call in PNG files for reproducibility, and protects existing files from being overwritten.">
+<meta name="description" content="A drop-in replacement for ggsave() from ggplot2, configured through global options so that existing scripts need no changes. Saves plots to several formats and sizes at once with consistent file names, protects existing files from being overwritten, writes greyscale and colour vision deficiency versions for checking colour palettes, embeds the code, data and session information in PNG files for reproducibility, and keeps a log of every saved figure.">
+<meta property="og:description" content="A drop-in replacement for ggsave() from ggplot2, configured through global options so that existing scripts need no changes. Saves plots to several formats and sizes at once with consistent file names, protects existing files from being overwritten, writes greyscale and colour vision deficiency versions for checking colour palettes, embeds the code, data and session information in PNG files for reproducibility, and keeps a log of every saved figure.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -30,13 +30,13 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="articles/ggsaveR.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/getting-started.html">Getting Started with ggsaveR</a></li>
-    <li><a class="dropdown-item" href="articles/intermediate-usage.html">Intermediate Usage of ggsaveR</a></li>
-    <li><a class="dropdown-item" href="articles/advanced-techniques.html">Advanced Techniques with ggsaveR</a></li>
+<li><a class="dropdown-item" href="articles/colour-checks.html">Checking colours for greyscale and colour vision deficiency</a></li>
+    <li><a class="dropdown-item" href="articles/reproducibility.html">Reproducible figures: embedded data and logging</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -54,263 +54,120 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="ggsaver-rocket">ggsaveR 🚀<a class="anchor" aria-label="anchor" href="#ggsaver-rocket"></a>
+<div class="page-header"><h1 id="ggsaver">ggsaveR<a class="anchor" aria-label="anchor" href="#ggsaver"></a>
 </h1></div>
 <!-- badges: start -->
 
-<p><strong><code>ggsaveR</code> supercharges <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code> without changing your code.</strong> ✨</p>
-<p>This package provides a drop-in replacement for <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code> that adds powerful new features. The magic is that all enhancements are controlled globally via <code><a href="https://rdrr.io/r/base/options.html" class="external-link">options()</a></code>. This means you can add <code><a href="https://andjar.github.io/ggsaveR/">library(ggsaveR)</a></code> and set a few options at the top of an existing script, and every <code><a href="reference/ggsave.html">ggsave()</a></code> call in that script will be instantly upgraded.</p>
-<div class="section level2">
-<h2 id="thinking-why-ggsaver">🤔 Why <code>ggsaveR</code>?<a class="anchor" aria-label="anchor" href="#thinking-why-ggsaver"></a>
-</h2>
-<p>In many data analysis projects, you might have dozens or even hundreds of <code><a href="reference/ggsave.html">ggsave()</a></code> calls. What if you need to:</p>
+<p>ggsaveR provides a drop-in replacement for <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code> whose extra behaviour is set once, with global options, instead of in every call. Add two lines to the top of an existing analysis script and every <code><a href="reference/ggsave.html">ggsave()</a></code> call in it will:</p>
 <ul>
-<li>Save every plot as both a high-resolution <code>png</code> for a presentation and a <code>pdf</code> for a manuscript?</li>
-<li>Ensure you don’t accidentally overwrite a critical figure from a long-running analysis?</li>
-<li>Trace a plot file back to the exact code and data that created it?</li>
+<li>save each figure in several formats and sizes, with consistent file names;</li>
+<li>write all figures to one folder, and never overwrite an existing file;</li>
+<li>produce greyscale and colour vision deficiency versions, so you can check that the colour palette works for every reader;</li>
+<li>embed the code, data and R session in PNG files, so a figure can be traced back to what produced it;</li>
+<li>record every saved file, with its size and checksum, in a CSV log.</li>
 </ul>
-<p>With the standard <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code>, you would have to go back and modify every single call. <code>ggsaveR</code> solves this by letting you define these behaviors once, globally.</p>
-<div class="section level3">
-<h3 id="ggsaver-vs-ggplot2ggsave">
-<code>ggsaveR</code> 🆚 <code>ggplot2::ggsave</code>
-<a class="anchor" aria-label="anchor" href="#ggsaver-vs-ggplot2ggsave"></a>
-</h3>
-<table class="table">
-<colgroup>
-<col width="20%">
-<col width="25%">
-<col width="54%">
-</colgroup>
-<thead><tr>
-<th>Feature</th>
-<th><code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave</a></code></th>
-<th><code>ggsaveR</code></th>
-</tr></thead>
-<tbody>
-<tr>
-<td><strong>Save a plot</strong></td>
-<td>✅ <code>ggsave("plot.png")</code>
-</td>
-<td>✅ <code>ggsave("plot.png")</code> (Works as a drop-in replacement)</td>
-</tr>
-<tr>
-<td><strong>Save to multiple formats</strong></td>
-<td>❌ Requires multiple <code><a href="reference/ggsave.html">ggsave()</a></code> calls.</td>
-<td>✅ <strong>Yes</strong>, in one call, controlled by a global option (<code>ggsaveR.formats</code>).</td>
-</tr>
-<tr>
-<td><strong>Save in multiple dimensions</strong></td>
-<td>❌ Requires multiple <code><a href="reference/ggsave.html">ggsave()</a></code> calls.</td>
-<td>✅ <strong>Yes</strong>, each format can have its own size and resolution.</td>
-</tr>
-<tr>
-<td><strong>Control file overwriting</strong></td>
-<td>❌ Always overwrites existing files.</td>
-<td>✅ <strong>Yes</strong>, choose to <code>"overwrite"</code>, <code>"stop"</code>, or create a <code>"unique"</code> filename.</td>
-</tr>
-<tr>
-<td><strong>Embed reproducibility data</strong></td>
-<td>❌ No.</td>
-<td>✅ <strong>Yes</strong>, automatically embed the plot object, generating code, and session info into PNGs.</td>
-</tr>
-<tr>
-<td><strong>Add author metadata</strong></td>
-<td>❌ No direct way.</td>
-<td>✅ <strong>Yes</strong> (PNG only), set a global <code>ggsaveR.creator</code> option.</td>
-</tr>
-<tr>
-<td><strong>Configuration Method</strong></td>
-<td>Arguments only.</td>
-<td>Arguments <strong>and</strong> global <code><a href="https://rdrr.io/r/base/options.html" class="external-link">options()</a></code>.</td>
-</tr>
-<tr>
-<td><strong>Bypass enhancements</strong></td>
-<td>N/A</td>
-<td>✅ <strong>Yes</strong>, use <code>guard = TRUE</code> for a specific call to use the original <code>ggplot2</code> behavior.</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
+<p>With no options set, <code><a href="reference/ggsave.html">ggsaveR::ggsave()</a></code> behaves exactly like <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code>.</p>
 <div class="section level2">
-<h2 id="package-installation">📦 Installation<a class="anchor" aria-label="anchor" href="#package-installation"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version from GitHub with:</p>
+<p>Install the development version from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"andjar/ggsaveR"</span><span class="op">)</span></span></code></pre></div>
-<p>SVG output additionally needs the <code>svglite</code> package, as it does with <code>ggplot2</code>.</p>
+<p>The colour vision deficiency simulations use the <a href="https://colorspace.r-forge.r-project.org/" class="external-link">colorspace</a> package, and SVG output needs <a href="https://svglite.r-lib.org/" class="external-link">svglite</a>, as it does in ggplot2.</p>
 </div>
 <div class="section level2">
-<h2 id="magic_wand-the-magic-seamless-integration-with-existing-projects">🪄 The Magic: Seamless Integration with Existing Projects<a class="anchor" aria-label="anchor" href="#magic_wand-the-magic-seamless-integration-with-existing-projects"></a>
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>This is the most powerful feature of <code>ggsaveR</code>. You don’t need to find and replace every <code><a href="reference/ggsave.html">ggsave()</a></code> call in your project.</p>
-<div class="section level4">
-<h4 id="before-ggsaver">Before <code>ggsaveR</code>
-<a class="anchor" aria-label="anchor" href="#before-ggsaver"></a>
-</h4>
-<p>A typical analysis script might look like this:</p>
+<p>An existing script needs no changes beyond loading ggsaveR and setting the options:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># --- my_analysis.R ---</span></span>
-<span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># ... lots of analysis code ...</span></span>
-<span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">mpg</span>, <span class="va">wt</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"figures/mpg_vs_wt.png"</span>, <span class="va">p1</span>, width <span class="op">=</span> <span class="fl">7</span>, height <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># ... more analysis code ...</span></span>
-<span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">Sepal.Length</span>, <span class="va">Petal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"figures/sepal_vs_petal.png"</span>, <span class="va">p2</span>, width <span class="op">=</span> <span class="fl">6</span>, height <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level4">
-<h4 id="after-ggsaver">After <code>ggsaveR</code>
-<a class="anchor" aria-label="anchor" href="#after-ggsaver"></a>
-</h4>
-<p>To save every plot as both a <code>png</code> and a <code>pdf</code>, just add two lines at the top of your script:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># --- my_analysis.R ---</span></span>
-<span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://andjar.github.io/ggsaveR/">ggsaveR</a></span><span class="op">)</span> <span class="co"># 1. Load the library (before or after ggplot2, the order doesn't matter)</span></span>
-<span></span>
-<span><span class="co"># 2. Set your desired global options</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"png"</span>, dpi <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"pdf"</span><span class="op">)</span></span>
-<span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># ... lots of analysis code ...</span></span>
-<span><span class="va">p1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">mpg</span>, <span class="va">wt</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co"># NO CHANGE NEEDED HERE! This now saves mpg_vs_wt.png AND mpg_vs_wt.pdf</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"figures/mpg_vs_wt.png"</span>, <span class="va">p1</span>, width <span class="op">=</span> <span class="fl">7</span>, height <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># ... more analysis code ...</span></span>
-<span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">Sepal.Length</span>, <span class="va">Petal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co"># NO CHANGE NEEDED HERE! This now saves sepal_vs_petal.png AND sepal_vs_petal.pdf</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"figures/sepal_vs_petal.png"</span>, <span class="va">p2</span>, width <span class="op">=</span> <span class="fl">6</span>, height <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="star2-core-features--examples">🌟 Core Features &amp; Examples<a class="anchor" aria-label="anchor" href="#star2-core-features--examples"></a>
-</h2>
-<p>First, let’s load the libraries and create a sample plot.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://andjar.github.io/ggsaveR/">ggsaveR</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://andjar.github.io/ggsaveR/">ggsaveR</a></span><span class="op">)</span>   <span class="co"># load order does not matter</span></span>
 <span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">mpg</span>, <span class="va">wt</span>, color <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Fuel Efficiency vs. Weight"</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="id_1-framed_picture-save-multiple-formats-and-dimensions">1. 🖼️ Save Multiple Formats and Dimensions<a class="anchor" aria-label="anchor" href="#id_1-framed_picture-save-multiple-formats-and-dimensions"></a>
-</h3>
-<p>Set the <code>ggsaveR.formats</code> option to a list of plot configurations. <code>ggsaveR</code> will then use the <code>filename</code> argument as a base name and create one file for each configuration.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="co"># A high-res PNG for presentations</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"png"</span>, width <span class="op">=</span> <span class="fl">8</span>, height <span class="op">=</span> <span class="fl">5</span>, units <span class="op">=</span> <span class="st">"in"</span>, dpi <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
-<span>  <span class="co"># A PDF for a manuscript</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"pdf"</span>, width <span class="op">=</span> <span class="fl">18</span>, height <span class="op">=</span> <span class="fl">11</span>, units <span class="op">=</span> <span class="st">"cm"</span><span class="op">)</span>,</span>
-<span>  <span class="co"># An SVG for web/editing</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"svg"</span>, width <span class="op">=</span> <span class="fl">7</span>, height <span class="op">=</span> <span class="fl">4.5</span><span class="op">)</span></span>
-<span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># This single call creates "outputs/my_plot.png", "outputs/my_plot.pdf",</span></span>
-<span><span class="co"># and "outputs/my_plot.svg" with the specified dimensions.</span></span>
-<span><span class="co"># The .png extension in the filename is ignored.</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"outputs/my_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Don't forget to reset the option when you're done!</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.formats <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
-<p>If all you need is several formats at the default size, a character vector is enough: <code>options(ggsaveR.formats = c("png", "pdf"))</code>. Settings in a format take precedence over arguments in the <code><a href="reference/ggsave.html">ggsave()</a></code> call; arguments in the call fill in whatever a format leaves out.</p>
-</div>
-<div class="section level3">
-<h3 id="id_2-shield-prevent-file-overwrites">2. 🛡️ Prevent File Overwrites<a class="anchor" aria-label="anchor" href="#id_2-shield-prevent-file-overwrites"></a>
-</h3>
-<p>Use <code>ggsaveR.overwrite_action</code> to avoid losing work.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.overwrite_action <span class="op">=</span> <span class="st">"unique"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Run this once: creates "safe_plot.png"</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"safe_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Run this again: creates "safe_plot-1.png" instead of overwriting</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"safe_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Run this a third time: creates "safe_plot-2.png"</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"safe_plot.png"</span>, <span class="va">p</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Reset to default</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.overwrite_action <span class="op">=</span> <span class="st">"overwrite"</span><span class="op">)</span></span></code></pre></div>
-<p>You can also set it to <code>"stop"</code> to throw an error if the file exists. When saving several formats at once, <code>"unique"</code> gives all files from one call the same suffix, and <code>"stop"</code> fails before any file is written.</p>
-</div>
-<div class="section level3">
-<h3 id="id_3-dna-reproducibility-embed-data-in-pngs">3. 🧬 Reproducibility: Embed Data in PNGs<a class="anchor" aria-label="anchor" href="#id_3-dna-reproducibility-embed-data-in-pngs"></a>
-</h3>
-<p>When <code>ggsaveR.embed_data = TRUE</code>, <code>ggsaveR</code> will automatically embed the <code>ggplot</code> object, its data, the R code passed as the <code>plot</code> argument, and session information directly into the PNG file. The image itself is unchanged and opens in any viewer.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.embed_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># The plot object and the code for it are embedded in the file's metadata</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span></span>
-<span>  <span class="st">"plot_with_data.png"</span>,</span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">iris</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">Sepal.Length</span>, <span class="va">Petal.Length</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>color <span class="op">=</span> <span class="va">Species</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/ggsaveR_options.html">ggsaveR_options</a></span><span class="op">(</span></span>
+<span>  formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"png"</span>, width <span class="op">=</span> <span class="fl">180</span>, height <span class="op">=</span> <span class="fl">120</span>, units <span class="op">=</span> <span class="st">"mm"</span>, dpi <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"pdf"</span>, width <span class="op">=</span> <span class="fl">180</span>, height <span class="op">=</span> <span class="fl">120</span>, units <span class="op">=</span> <span class="st">"mm"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  dir <span class="op">=</span> <span class="st">"figures"</span>,</span>
+<span>  overwrite_action <span class="op">=</span> <span class="st">"unique"</span>,</span>
+<span>  variants <span class="op">=</span> <span class="st">"greyscale"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Retrieve the information later, even without the original script</span></span>
-<span><span class="va">embedded_info</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_ggsaveR_data.html">read_ggsaveR_data</a></span><span class="op">(</span><span class="st">"plot_with_data.png"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># See the captured code</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">embedded_info</span><span class="op">$</span><span class="va">plot_call</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ggplot(iris, aes(Sepal.Length, Petal.Length)) + geom_point(aes(color = Species))</span></span>
-<span></span>
-<span><span class="co"># The data behind the plot</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">embedded_info</span><span class="op">$</span><span class="va">plot_data</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># You can even replot or restyle the original object</span></span>
-<span><span class="va">embedded_info</span><span class="op">$</span><span class="va">plot_object</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.embed_data <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p>If you save a plot stored in a variable (<code>ggsave("plot.png", p)</code>), the captured code is just <code>p</code>; the plot object and data are still embedded in full. Use <code>ggsaveR.embed_metadata</code> to choose what is embedded, e.g. <code>options(ggsaveR.embed_metadata = c("data", "call"))</code>.</p>
-<blockquote>
-<p><strong>⚠️ Think before sharing PNGs with embedded data.</strong></p>
-<ul>
-<li>The file contains the <strong>complete data frame</strong> behind the plot, including columns that are not shown, and for plots created inside a function, every object in that function’s environment. Don’t publish such files if the data are sensitive, and expect them to be larger. <code><a href="reference/ggsave.html">ggsave()</a></code> reports the size of the embedded data.</li>
-<li>
-<code><a href="reference/read_ggsaveR_data.html">read_ggsaveR_data()</a></code> restores a serialized R object. Like <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code> and <code><a href="https://rdrr.io/r/base/load.html" class="external-link">load()</a></code>, it should only be used on files from a source you trust.</li>
-</ul>
-</blockquote>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">mpg</span>, <span class="va">wt</span>, colour <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">cyl</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"fuel-economy.png"</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="co">#&gt; figures/fuel-economy.png</span></span>
+<span><span class="co">#&gt; figures/fuel-economy.pdf</span></span>
+<span><span class="co">#&gt; figures/fuel-economy_greyscale.png</span></span></code></pre></div>
+<p><code><a href="reference/ggsaveR_options.html">ggsaveR_options()</a></code> checks the values straight away and returns the previous settings, so <code>options(old)</code> restores them. Plain <code>options(ggsaveR.formats = ...)</code> works too.</p>
+</div>
+<div class="section level2">
+<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+</h2>
+<div class="section level3">
+<h3 id="several-formats-and-sizes">Several formats and sizes<a class="anchor" aria-label="anchor" href="#several-formats-and-sizes"></a>
+</h3>
+<p><code>formats</code> is either a character vector of devices, such as <code>c("png", "pdf")</code>, or a list of formats, each a list with a <code>device</code> and any other <code><a href="reference/ggsave.html">ggsave()</a></code> arguments. Settings in a format take precedence over arguments in the call; arguments in the call fill in whatever a format leaves out.</p>
+<p>When two formats would write to the same file, for example a PNG for slides and a PNG for print, the size is added to the file names:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggsaveR_options.html">ggsaveR_options</a></span><span class="op">(</span>formats <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"png"</span>, width <span class="op">=</span> <span class="fl">120</span>, height <span class="op">=</span> <span class="fl">80</span>, units <span class="op">=</span> <span class="st">"mm"</span>, dpi <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>device <span class="op">=</span> <span class="st">"png"</span>, width <span class="op">=</span> <span class="fl">254</span>, height <span class="op">=</span> <span class="fl">143</span>, units <span class="op">=</span> <span class="st">"mm"</span>, dpi <span class="op">=</span> <span class="fl">150</span><span class="op">)</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"trend.png"</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="co">#&gt; trend_120x80mm_300dpi.png</span></span>
+<span><span class="co">#&gt; trend_254x143mm_150dpi.png</span></span></code></pre></div>
+<p>Set <code>size_suffix = TRUE</code> to add the size to every file name, or give a format its own <code>suffix</code>, such as <code>"_slide"</code>.</p>
 </div>
 <div class="section level3">
-<h3 id="id_4-running_man-the-escape-hatch-guard--true">4. 🏃‍♂️ The Escape Hatch: <code>guard = TRUE</code>
-<a class="anchor" aria-label="anchor" href="#id_4-running_man-the-escape-hatch-guard--true"></a>
+<h3 id="output-folder-and-overwrite-protection">Output folder and overwrite protection<a class="anchor" aria-label="anchor" href="#output-folder-and-overwrite-protection"></a>
 </h3>
-<p>What if you have global options set but need to bypass them for one specific plot? Use <code>guard = TRUE</code>. This tells <code>ggsaveR</code> to step aside and pass the call directly to <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave</a></code>.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Let's set a global option to create unique filenames</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>ggsaveR.overwrite_action <span class="op">=</span> <span class="st">"unique"</span><span class="op">)</span></span>
+<p><code>dir</code> places every file with a relative name in one folder and creates it when needed. <code>overwrite_action</code> controls what happens when a file exists: <code>"overwrite"</code> (the default, as in ggplot2), <code>"unique"</code> (save as <code>trend-1.png</code>, <code>trend-2.png</code>, …) or <code>"stop"</code> (raise an error before any file is written).</p>
+</div>
+<div class="section level3">
+<h3 id="colour-checks">Colour checks<a class="anchor" aria-label="anchor" href="#colour-checks"></a>
+</h3>
+<p>Around 8% of men and 0.5% of women of Northern European ancestry have a colour vision deficiency, and many figures are printed or photocopied in greyscale. <code><a href="reference/preview_variants.html">preview_variants()</a></code> shows a plot as these readers see it:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">mpg</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">displ</span>, <span class="va">hwy</span>, colour <span class="op">=</span> <span class="va">class</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/preview_variants.html">preview_variants</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></code></pre></div>
+<div class="float">
+<img src="reference/figures/preview-variants.png" alt="A scatter plot shown in its original colours, in greyscale, and with simulated deuteranopia, protanopia and tritanopia. In greyscale all seven classes look the same."><div class="figcaption">A scatter plot shown in its original colours, in greyscale, and with simulated deuteranopia, protanopia and tritanopia. In greyscale all seven classes look the same.</div>
+</div>
+<p>The default ggplot2 palette has nearly equal lightness, so in greyscale the seven groups cannot be told apart. To save these versions next to every figure, set <code>variants = c("greyscale", "deutan", "protan", "tritan")</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="reproducibility">Reproducibility<a class="anchor" aria-label="anchor" href="#reproducibility"></a>
+</h3>
+<p>With <code>embed_data = TRUE</code>, PNG files carry the expression that produced the plot, the data behind it, the R session and the plot object. The image itself is unchanged.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/ggsaveR_options.html">ggsaveR_options</a></span><span class="op">(</span>embed_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"trend.png"</span>, <span class="va">p</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># This call will create `final_figure.png`, then `final_figure-1.png`, etc.</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"final_figure.png"</span>, <span class="va">p</span><span class="op">)</span></span>
+<span><span class="va">info</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_ggsaveR_data.html">read_ggsaveR_data</a></span><span class="op">(</span><span class="st">"trend.png"</span><span class="op">)</span></span>
+<span><span class="va">info</span><span class="op">$</span><span class="va">plot_call</span>       <span class="co"># "p"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">info</span><span class="op">$</span><span class="va">plot_data</span><span class="op">)</span> <span class="co"># the data, as a data frame</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">info</span><span class="op">$</span><span class="va">session_info</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># But for this one call, we want the standard ggplot2 behavior (overwrite)</span></span>
-<span><span class="co"># The `guard` argument ensures ggsaveR's features are ignored for this call only.</span></span>
-<span><span class="fu"><a href="reference/ggsave.html">ggsave</a></span><span class="op">(</span><span class="st">"final_figure.png"</span>, <span class="va">p</span>, guard <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<blockquote>
-<p><strong>⚠️ Warning:</strong> Using <code>guard = TRUE</code> in a script requires that the <code>ggsaveR</code> package is loaded. If it’s not, the original <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave</a></code> will throw an “unused argument” error.</p>
-</blockquote>
+<span><span class="co"># The plot object is a serialized R object: only restore it from files you trust</span></span>
+<span><span class="va">p2</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/read_ggsaveR_data.html">read_ggsaveR_data</a></span><span class="op">(</span><span class="st">"trend.png"</span>, trusted <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">plot_object</span></span></code></pre></div>
+<p>The call, data and session are stored as text and CSV, so they are safe to read and can be extracted outside R. Embedded data include every column of the data frame, so do not share such files if the data are sensitive. Use <code>embed_metadata</code> to embed less, or <code>guard = TRUE</code> to skip a single plot.</p>
+<p><code>log = "figures/log.csv"</code> appends one row per saved file with the time, path, size, resolution, MD5 checksum and the plot expression.</p>
+</div>
+<div class="section level3">
+<h3 id="escape-hatch">Escape hatch<a class="anchor" aria-label="anchor" href="#escape-hatch"></a>
+</h3>
+<p><code>ggsave(..., guard = TRUE)</code> bypasses every option for one call and hands it unchanged to <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code>.</p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="gear-full-list-of-options">⚙️ Full List of Options<a class="anchor" aria-label="anchor" href="#gear-full-list-of-options"></a>
+<h2 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a>
 </h2>
 <table class="table">
 <colgroup>
-<col width="14%">
-<col width="7%">
-<col width="77%">
+<col width="33%">
+<col width="33%">
+<col width="33%">
 </colgroup>
 <thead><tr>
 <th>Option</th>
@@ -319,48 +176,83 @@
 </tr></thead>
 <tbody>
 <tr>
-<td><code>ggsaveR.formats</code></td>
+<td><code>formats</code></td>
 <td><code>NULL</code></td>
-<td>A character vector of devices, or a <code>list</code> of lists that each define a file to save (e.g., <code>list(device = "png", dpi = 300)</code>).</td>
+<td>Devices, or a list of formats with their own size and resolution.</td>
 </tr>
 <tr>
-<td><code>ggsaveR.overwrite_action</code></td>
+<td><code>size_suffix</code></td>
+<td><code>"auto"</code></td>
+<td>Add the size to file names: <code>"auto"</code> (only on clashes), <code>TRUE</code> or <code>FALSE</code>.</td>
+</tr>
+<tr>
+<td><code>dir</code></td>
+<td><code>NULL</code></td>
+<td>Folder for all files with a relative name.</td>
+</tr>
+<tr>
+<td><code>overwrite_action</code></td>
 <td><code>"overwrite"</code></td>
-<td>What to do when a file exists: <code>"overwrite"</code>, <code>"unique"</code>, or <code>"stop"</code>.</td>
+<td>
+<code>"overwrite"</code>, <code>"unique"</code> or <code>"stop"</code>.</td>
 </tr>
 <tr>
-<td><code>ggsaveR.embed_data</code></td>
-<td><code>FALSE</code></td>
-<td>Embed reproducibility data in PNG files.</td>
-</tr>
-<tr>
-<td><code>ggsaveR.embed_metadata</code></td>
-<td>all four</td>
-<td>Which parts to embed: any of <code>"plot"</code>, <code>"data"</code>, <code>"session_info"</code>, <code>"call"</code>.</td>
-</tr>
-<tr>
-<td><code>ggsaveR.creator</code></td>
+<td><code>variants</code></td>
 <td><code>NULL</code></td>
-<td>A string stored as the <code>Author</code> text field of PNG files.</td>
+<td>Any of <code>"greyscale"</code>, <code>"deutan"</code>, <code>"protan"</code>, <code>"tritan"</code>.</td>
+</tr>
+<tr>
+<td><code>embed_data</code></td>
+<td><code>FALSE</code></td>
+<td>Embed reproducibility information in PNG files.</td>
+</tr>
+<tr>
+<td><code>embed_metadata</code></td>
+<td>all</td>
+<td>Any of <code>"plot"</code>, <code>"data"</code>, <code>"session_info"</code>, <code>"call"</code>.</td>
+</tr>
+<tr>
+<td><code>embed_max_size</code></td>
+<td>5 MB</td>
+<td>Largest embedded plot object and data.</td>
+</tr>
+<tr>
+<td><code>creator</code></td>
+<td><code>NULL</code></td>
+<td>Stored as the <code>Author</code> of PNG files.</td>
+</tr>
+<tr>
+<td><code>log</code></td>
+<td><code>NULL</code></td>
+<td>Path of a CSV file that records every saved file.</td>
 </tr>
 </tbody>
 </table>
-<p>Metadata is only written to PNG files; PDF, SVG and other formats are saved exactly as <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code> would save them.</p>
+<p>Each option can also be set with <code><a href="https://rdrr.io/r/base/options.html" class="external-link">options()</a></code>, prefixed with <code>ggsaveR.</code>, for example <code>options(ggsaveR.dir = "figures")</code>. Metadata is only written to PNG files; other formats are saved exactly as <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code> saves them.</p>
 </div>
 <div class="section level2">
-<h2 id="mag-differences-from-ggplot2ggsave">🔍 Differences from <code>ggplot2::ggsave()</code>
-<a class="anchor" aria-label="anchor" href="#mag-differences-from-ggplot2ggsave"></a>
+<h2 id="differences-from-ggplot2">Differences from ggplot2<a class="anchor" aria-label="anchor" href="#differences-from-ggplot2"></a>
 </h2>
-<p>With no options set, <code><a href="reference/ggsave.html">ggsaveR::ggsave()</a></code> behaves like the original, with three small additions:</p>
+<p>With no options set, <code><a href="reference/ggsave.html">ggsaveR::ggsave()</a></code> differs from <code><a href="https://ggplot2.tidyverse.org/reference/ggsave.html" class="external-link">ggplot2::ggsave()</a></code> in three small ways:</p>
 <ul>
 <li>
-<code>device</code> can be a character vector (<code>device = c("png", "pdf")</code>) to save several files in one call.</li>
-<li>If <code>filename</code> has no extension and <code>device</code> is a single string, the device is appended as the extension.</li>
-<li>The (invisible) return value is a character vector of all files written.</li>
+<code>device</code> can be a character vector, such as <code>c("png", "pdf")</code>, to save several files in one call;</li>
+<li>if <code>filename</code> has no extension and <code>device</code> is a single string, the device is appended as the extension;</li>
+<li>the invisible return value is a character vector of every file written.</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="page_facing_up-license">📄 License<a class="anchor" aria-label="anchor" href="#page_facing_up-license"></a>
+<h2 id="getting-help-and-contributing">Getting help and contributing<a class="anchor" aria-label="anchor" href="#getting-help-and-contributing"></a>
+</h2>
+<p>Please report bugs and suggest features in the <a href="https://github.com/andjar/ggsaveR/issues" class="external-link">issue tracker</a>. Contributions are welcome; see the <a href="CONTRIBUTING.html">contributing guide</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<p>Run <code>citation("ggsaveR")</code> for how to cite the package.</p>
+</div>
+<div class="section level2">
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
 <p>GPL (&gt;= 3)</p>
 </div>
@@ -381,6 +273,12 @@
 </ul>
 </div>
 
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
+</ul>
+</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
@@ -400,6 +298,7 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/andjar/ggsaveR/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/andjar/ggsaveR/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
 </ul>
 </div>
 

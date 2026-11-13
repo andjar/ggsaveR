@@ -1,10 +1,8 @@
 # Articles
 
-### Guides
+### Articles
 
-- [Getting Started with
-  ggsaveR](https://andjar.github.io/ggsaveR/articles/getting-started.md):
-- [Intermediate Usage of
-  ggsaveR](https://andjar.github.io/ggsaveR/articles/intermediate-usage.md):
-- [Advanced Techniques with
-  ggsaveR](https://andjar.github.io/ggsaveR/articles/advanced-techniques.md):
+- [Checking colours for greyscale and colour vision
+  deficiency](https://andjar.github.io/ggsaveR/articles/colour-checks.md):
+- [Reproducible figures: embedded data and
+  logging](https://andjar.github.io/ggsaveR/articles/reproducibility.md):

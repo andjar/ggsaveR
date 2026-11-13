@@ -10,17 +10,40 @@ picks them up.
 
 ## Options
 
+Set the options with
+[`ggsaveR_options()`](https://andjar.github.io/ggsaveR/reference/ggsaveR_options.md),
+which checks them, or with
+[`options()`](https://rdrr.io/r/base/options.html) using the names
+below.
+
 - `ggsaveR.formats`:
 
   `NULL` (default), a character vector of devices, or a list of lists
-  that each hold a `device` and optional
+  that each hold a `device`, optional
   [`ggsave()`](https://andjar.github.io/ggsaveR/reference/ggsave.md)
-  arguments such as `width`, `height`, `units` and `dpi`. One file is
-  written per format.
+  arguments such as `width`, `height`, `units` and `dpi`, and an
+  optional `suffix`. One file is written per format.
+
+- `ggsaveR.size_suffix`:
+
+  `"auto"` (default), `TRUE` or `FALSE`. Add the size to file names, as
+  in `plot_120x80mm_300dpi.png`; `"auto"` does so only when file names
+  would otherwise clash.
+
+- `ggsaveR.dir`:
+
+  `NULL` (default) or a directory for all plots with a relative file
+  name. Created if needed.
 
 - `ggsaveR.overwrite_action`:
 
   `"overwrite"` (default), `"unique"` or `"stop"`.
+
+- `ggsaveR.variants`:
+
+  `NULL` (default) or any of `"greyscale"`, `"deutan"`, `"protan"` and
+  `"tritan"`. Also save these versions as PNG files; see
+  [`preview_variants()`](https://andjar.github.io/ggsaveR/reference/preview_variants.md).
 
 - `ggsaveR.embed_data`:
 
@@ -33,10 +56,20 @@ picks them up.
   Which parts to embed: any of `"plot"`, `"data"`, `"session_info"` and
   `"call"` (default: all).
 
+- `ggsaveR.embed_max_size`:
+
+  Largest size in bytes of the embedded plot object and data (default 5
+  MB).
+
 - `ggsaveR.creator`:
 
   `NULL` (default) or a string stored as the `Author` text field of PNG
   files.
+
+- `ggsaveR.log`:
+
+  `NULL` (default) or the path of a CSV file that records every saved
+  file.
 
 Metadata (`ggsaveR.embed_data` and `ggsaveR.creator`) is only written to
 PNG files; other formats are saved unchanged.
