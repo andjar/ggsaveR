@@ -12,7 +12,7 @@ test_that("data embedding round-trips through a PNG", {
   expect_named(info, c("ggsaveR_version", "plot_call", "session_info", "plot_data"))
   expect_equal(info$ggsaveR_version, utils::packageVersion("ggsaveR"))
   expect_equal(info$plot_call, "p")
-  expect_match(info$session_info, "R version")
+  expect_match(info$session_info, "Platform:")
   expect_equal(info$plot_data, mtcars, ignore_attr = TRUE)
 })
 
@@ -38,7 +38,7 @@ test_that("call, session and data are stored without serialization", {
   meta <- png_metadata("embed.png")
 
   expect_equal(meta$ggsaveR_call, "p")
-  expect_match(meta$ggsaveR_session, "R version")
+  expect_match(meta$ggsaveR_session, "Platform:")
   csv <- rawToChar(memDecompress(base64enc::base64decode(meta$ggsaveR_data_csv), "gzip"))
   expect_match(csv, '^"mpg","cyl"')
 })
