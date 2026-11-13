@@ -48,7 +48,16 @@ test_that("non-ggplot grobs can be saved", {
   local_test_env(ggsaveR.embed_data = TRUE)
   save_quietly("grob.png", grid::rectGrob())
   expect_true(file.exists("grob.png"))
-  expect_s3_class(read_ggsaveR_data("grob.png")$plot_object, "grob")
+  expect_s3_class(read_ggsaveR_data("grob.png", trusted = TRUE)$plot_object, "grob")
+})
+
+test_that("the path argument is combined with filename, as in ggplot2", {
+  local_test_env(ggsaveR.overwrite_action = "stop")
+  dir.create("sub")
+  expect_equal(save_quietly("plot.png", p, path = "sub"), file.path("sub", "plot.png"))
+  expect_true(file.exists("sub/plot.png"))
+  # The overwrite check sees the real location
+  expect_error(save_quietly("plot.png", p, path = "sub"), "already exists")
 })
 
 test_that("unusable input gives informative errors", {
@@ -74,17 +83,40 @@ test_that("invalid options are reported instead of silently ignored", {
 
   withr::local_options(ggsaveR.creator = NULL, ggsaveR.formats = 1:2)
   expect_error(save_quietly("a.png", p), "ggsaveR.formats")
+
+  withr::local_options(ggsaveR.formats = list(list(device = grDevices::png)))
+  expect_error(save_quietly("a.png", p), "as strings")
+
+  withr::local_options(ggsaveR.formats = list(list(device = "png", suffix = 1)))
+  expect_error(save_quietly("a.png", p), "suffix")
+
+  withr::local_options(ggsaveR.formats = NULL, ggsaveR.size_suffix = "yes")
+  expect_error(save_quietly("a.png", p), "ggsaveR.size_suffix")
+
+  withr::local_options(ggsaveR.size_suffix = "auto", ggsaveR.dir = 1)
+  expect_error(save_quietly("a.png", p), "ggsaveR.dir")
+
+  withr::local_options(ggsaveR.dir = NULL, ggsaveR.variants = "sepia")
+  expect_error(save_quietly("a.png", p), "ggsaveR.variants")
+
+  withr::local_options(ggsaveR.variants = NULL, ggsaveR.embed_max_size = -1)
+  expect_error(save_quietly("a.png", p), "ggsaveR.embed_max_size")
+
+  withr::local_options(ggsaveR.embed_max_size = 5e6, ggsaveR.log = TRUE)
+  expect_error(save_quietly("a.png", p), "ggsaveR.log")
   expect_false(file.exists("a.png"))
 })
 
 test_that("default options are set when the package is loaded", {
   withr::local_options(list(
     ggsaveR.overwrite_action = NULL,
+    ggsaveR.size_suffix = NULL,
     ggsaveR.embed_data = NULL,
     ggsaveR.embed_metadata = NULL
   ))
   ggsaveR:::.onLoad()
   expect_equal(getOption("ggsaveR.overwrite_action"), "overwrite")
+  expect_equal(getOption("ggsaveR.size_suffix"), "auto")
   expect_false(getOption("ggsaveR.embed_data"))
   expect_equal(getOption("ggsaveR.embed_metadata"), c("plot", "data", "session_info", "call"))
 })

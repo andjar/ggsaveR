@@ -5,9 +5,11 @@ Authors@R:
     person("Anders Hagen", "Jarmund", , "anders.h.jarmund@ntnu.no", role = c("aut", "cre"))
 Description: A drop-in replacement for 'ggsave()' from 'ggplot2', configured
     through global options so that existing scripts need no changes. Saves
-    plots to several formats and sizes at once, embeds the plot object, data
-    and call in PNG files for reproducibility, and protects existing files
-    from being overwritten.
+    plots to several formats and sizes at once with consistent file names,
+    protects existing files from being overwritten, writes greyscale and
+    colour vision deficiency versions for checking colour palettes, embeds
+    the code, data and session information in PNG files for
+    reproducibility, and keeps a log of every saved figure.
 License: GPL (>= 3)
 Depends: 
     R (>= 4.1.0),
@@ -19,10 +21,14 @@ URL: https://andjar.github.io/ggsaveR/, https://github.com/andjar/ggsaveR
 BugReports: https://github.com/andjar/ggsaveR/issues
 Imports: 
     base64enc,
+    grDevices,
+    grid,
     png (>= 0.1-8),
+    stats,
     tools,
     utils
 Suggests: 
+    colorspace (>= 2.0-0),
     knitr,
     ragg,
     rmarkdown,

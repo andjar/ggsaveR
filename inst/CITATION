@@ -1,0 +1,8 @@
+bibentry(
+  bibtype = "Manual",
+  title = "{ggsaveR}: A Drop-in Replacement for 'ggsave()' with Extra Features",
+  author = person("Anders Hagen", "Jarmund"),
+  year = format(Sys.Date(), "%Y"),
+  note = paste("R package version", utils::packageVersion("ggsaveR")),
+  url = "https://andjar.github.io/ggsaveR/"
+)
