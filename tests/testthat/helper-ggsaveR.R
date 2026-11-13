@@ -9,10 +9,15 @@ local_test_env <- function(..., .env = parent.frame()) {
   withr::local_options(
     list(
       ggsaveR.formats = NULL,
+      ggsaveR.size_suffix = "auto",
+      ggsaveR.dir = NULL,
       ggsaveR.overwrite_action = "overwrite",
+      ggsaveR.variants = NULL,
       ggsaveR.embed_data = FALSE,
       ggsaveR.embed_metadata = c("plot", "data", "session_info", "call"),
-      ggsaveR.creator = NULL
+      ggsaveR.embed_max_size = 5e6,
+      ggsaveR.creator = NULL,
+      ggsaveR.log = NULL
     ),
     .local_envir = .env
   )

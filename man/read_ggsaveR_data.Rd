@@ -4,28 +4,51 @@
 \alias{read_ggsaveR_data}
 \title{Read reproducibility data embedded in a PNG}
 \usage{
-read_ggsaveR_data(path)
+read_ggsaveR_data(path, trusted = FALSE)
 }
 \arguments{
 \item{path}{Path to a PNG file written by \code{\link[=ggsave]{ggsave()}}.}
+
+\item{trusted}{If \code{TRUE}, also restore the serialized plot object. Files
+written by ggsaveR 0.1.0, which stored everything as one serialized
+object, can only be read with \code{trusted = TRUE}.}
 }
 \value{
-A list with some or all of the elements \code{ggsaveR_version},
-\code{plot_object}, \code{plot_data}, \code{session_info} and \code{plot_call}, depending on
-the \code{ggsaveR.embed_metadata} option in effect when the file was saved.
+A list with some or all of these elements, depending on the
+\code{ggsaveR.embed_metadata} option in effect when the file was saved:
+\describe{
+\item{\code{ggsaveR_version}}{Version of ggsaveR that wrote the file.}
+\item{\code{plot_call}}{The expression passed as \code{plot}, as a string.}
+\item{\code{session_info}}{The printed \code{\link[=sessionInfo]{sessionInfo()}}, as a string.}
+\item{\code{plot_data}}{The plot data as a data frame, read back from CSV.
+Column types are those \code{\link[utils:read.table]{utils::read.csv()}} infers; factor levels,
+dates and row names are not kept. Use \code{plot_object$data} for the
+exact data.}
+\item{\code{plot_object}}{The plot object, only with \code{trusted = TRUE}.}
+}
 Returns \code{NULL}, with a warning, if the file holds no ggsaveR data or
 cannot be read.
 }
 \description{
-Extracts the data that \code{\link[=ggsave]{ggsave()}} embeds in a PNG file when the
+Extracts the information that \code{\link[=ggsave]{ggsave()}} embeds in a PNG file when the
 \code{ggsaveR.embed_data} option is \code{TRUE}.
 }
 \section{Security}{
 
-The data are stored as a serialized R object and restored with
-\code{\link[=unserialize]{unserialize()}}. Unserializing a file from an untrusted source can execute
-arbitrary code, so only use this function on PNG files that you, or someone
-you trust, created.
+The plot object is stored as a serialized R object. Restoring it with
+\code{\link[=unserialize]{unserialize()}} can run arbitrary code, so it is only read when you set
+\code{trusted = TRUE}. Do that only for files that you, or someone you trust,
+created. The call, session information and data are stored as plain text
+and CSV, and are always safe to read.
+}
+
+\section{Reading the data outside R}{
+
+The data are stored in the PNG text chunk \code{ggsaveR_data_csv} as a
+UTF-8 CSV file, compressed with zlib and base64 encoded. In Python, for
+example: \code{zlib.decompress(base64.b64decode(text))}. The call and session
+are in the plain-text chunks \code{ggsaveR_call} and \code{ggsaveR_session}, which
+tools such as \code{exiftool} show directly.
 }
 
 \examples{
@@ -33,12 +56,14 @@ library(ggplot2)
 p <- ggplot(mtcars, aes(mpg, wt)) + geom_point()
 out <- file.path(tempdir(), "embedded.png")
 
-old <- options(ggsaveR.embed_data = TRUE)
+old <- ggsaveR_options(embed_data = TRUE)
 ggsave(out, p, width = 5, height = 4)
 options(old)
 
 info <- read_ggsaveR_data(out)
-names(info)
 info$plot_call
 head(info$plot_data)
+
+# The plot object itself: only for files you trust
+restored <- read_ggsaveR_data(out, trusted = TRUE)$plot_object
 }

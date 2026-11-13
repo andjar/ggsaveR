@@ -12,19 +12,33 @@ at the top of a script, and every existing \code{ggsave()} call picks them up.
 }
 \section{Options}{
 
+Set the options with \code{\link[=ggsaveR_options]{ggsaveR_options()}}, which checks them, or with
+\code{\link[=options]{options()}} using the names below.
 \describe{
 \item{\code{ggsaveR.formats}}{\code{NULL} (default), a character vector of devices,
-or a list of lists that each hold a \code{device} and optional \code{ggsave()}
-arguments such as \code{width}, \code{height}, \code{units} and \code{dpi}. One file is
-written per format.}
+or a list of lists that each hold a \code{device}, optional \code{ggsave()}
+arguments such as \code{width}, \code{height}, \code{units} and \code{dpi}, and an optional
+\code{suffix}. One file is written per format.}
+\item{\code{ggsaveR.size_suffix}}{\code{"auto"} (default), \code{TRUE} or \code{FALSE}. Add
+the size to file names, as in \code{plot_120x80mm_300dpi.png}; \code{"auto"} does
+so only when file names would otherwise clash.}
+\item{\code{ggsaveR.dir}}{\code{NULL} (default) or a directory for all plots with a
+relative file name. Created if needed.}
 \item{\code{ggsaveR.overwrite_action}}{\code{"overwrite"} (default), \code{"unique"} or
 \code{"stop"}.}
+\item{\code{ggsaveR.variants}}{\code{NULL} (default) or any of \code{"greyscale"},
+\code{"deutan"}, \code{"protan"} and \code{"tritan"}. Also save these versions as PNG
+files; see \code{\link[=preview_variants]{preview_variants()}}.}
 \item{\code{ggsaveR.embed_data}}{\code{FALSE} (default) or \code{TRUE}. Embed
 reproducibility data in PNG files; see \code{\link[=read_ggsaveR_data]{read_ggsaveR_data()}}.}
 \item{\code{ggsaveR.embed_metadata}}{Which parts to embed: any of \code{"plot"},
 \code{"data"}, \code{"session_info"} and \code{"call"} (default: all).}
+\item{\code{ggsaveR.embed_max_size}}{Largest size in bytes of the embedded plot
+object and data (default 5 MB).}
 \item{\code{ggsaveR.creator}}{\code{NULL} (default) or a string stored as the
 \code{Author} text field of PNG files.}
+\item{\code{ggsaveR.log}}{\code{NULL} (default) or the path of a CSV file that
+records every saved file.}
 }
 
 Metadata (\code{ggsaveR.embed_data} and \code{ggsaveR.creator}) is only written to PNG

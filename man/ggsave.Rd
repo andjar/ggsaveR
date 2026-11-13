@@ -4,7 +4,14 @@
 \alias{ggsave}
 \title{Save a ggplot (or other grid object) with ggsaveR enhancements}
 \usage{
-ggsave(filename, plot = last_plot(), device = NULL, ..., guard = FALSE)
+ggsave(
+  filename,
+  plot = last_plot(),
+  device = NULL,
+  path = NULL,
+  ...,
+  guard = FALSE
+)
 }
 \arguments{
 \item{filename}{File name to create on disk.}
@@ -15,6 +22,9 @@ ggsave(filename, plot = last_plot(), device = NULL, ..., guard = FALSE)
 \code{filename}), a device name such as \code{"png"}, a character vector of device
 names, or a device function. See \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}. Ignored when the
 \code{ggsaveR.formats} option is set.}
+
+\item{path}{Directory to save the plot in, combined with \code{filename} as in
+\code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}.}
 
 \item{...}{Other arguments passed on to \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}, such as
 \code{width}, \code{height}, \code{units}, \code{dpi}, \code{scale} or \code{bg}.}
@@ -28,29 +38,43 @@ Invisibly, a character vector with the paths of the files created.
 \description{
 A drop-in replacement for \code{\link[ggplot2:ggsave]{ggplot2::ggsave()}}. Called without any \verb{ggsaveR.*}
 options set, it behaves like the original. Setting options switches on extra
-behaviour for every \code{ggsave()} call in a script: saving to several formats at
-once, protecting existing files, and embedding metadata in PNG files.
+behaviour for every \code{ggsave()} call in a script. See \code{\link[=ggsaveR_options]{ggsaveR_options()}} for
+the full list.
 }
 \section{Options}{
 
-All enhancements are controlled with \code{\link[=options]{options()}}; see \link{ggsaveR-package} for
-the full reference.
 \itemize{
-\item \code{ggsaveR.formats}: save every plot in several formats and sizes. Either a
-character vector of devices (\code{c("png", "pdf")}) or a list of lists, each
-with a \code{device} and any other \code{ggsave()} arguments
-(\code{list(device = "png", width = 8, height = 5, dpi = 300)}). The extension
-of \code{filename} is replaced, and the \code{device} argument is ignored. Settings
-in a format take precedence over arguments given in the call.
-\item \code{ggsaveR.overwrite_action}: what to do when a file already exists:
-\code{"overwrite"} (default), \code{"stop"} (error, before anything is written) or
-\code{"unique"} (save as \verb{plot-1.png}, \verb{plot-2.png}, ...; all formats of one
-call share the same suffix).
-\item \code{ggsaveR.embed_data}: if \code{TRUE}, embed the plot object, its data, the
-call and the session info in PNG files. Read them back with
-\code{\link[=read_ggsaveR_data]{read_ggsaveR_data()}}. \code{ggsaveR.embed_metadata} selects which parts.
+\item \code{ggsaveR.formats}: save every plot in several formats and sizes, either as
+a character vector of devices (\code{c("png", "pdf")}) or as a list of lists,
+each with a \code{device} and any other \code{ggsave()} arguments
+(\code{list(device = "png", width = 120, height = 80, units = "mm", dpi = 300)}).
+The extension of \code{filename} is replaced and the \code{device} argument is
+ignored. Settings in a format take precedence over arguments in the call.
+\item \code{ggsaveR.size_suffix}: add the size to file names, as in
+\code{plot_120x80mm_300dpi.png}. By default (\code{"auto"}) this happens only when
+two formats would otherwise write to the same file.
+\item \code{ggsaveR.dir}: save all plots with a relative file name into this
+directory.
+\item \code{ggsaveR.overwrite_action}: \code{"overwrite"} (default), \code{"unique"} or
+\code{"stop"} when a file already exists.
+\item \code{ggsaveR.variants}: also save greyscale and colour vision deficiency
+versions as PNG files, such as \code{plot_greyscale.png} and \code{plot_deutan.png}.
+\item \code{ggsaveR.embed_data}, \code{ggsaveR.embed_metadata}, \code{ggsaveR.embed_max_size}:
+embed the plot expression, data, session information and plot object in
+PNG files. Read them back with \code{\link[=read_ggsaveR_data]{read_ggsaveR_data()}}.
 \item \code{ggsaveR.creator}: a string stored as the \code{Author} of PNG files.
+\item \code{ggsaveR.log}: append a row describing every saved file to a CSV file.
 }
+}
+
+\section{File names}{
+
+The final file name is built in this order: the directory from
+\code{ggsaveR.dir} (for relative names), the stem of \code{filename}, a suffix
+(an explicit \code{suffix} from the format, otherwise a size suffix if
+\code{ggsaveR.size_suffix} calls for one), the extension of the device, and
+finally \code{-1}, \code{-2}, ... if \code{ggsaveR.overwrite_action = "unique"} and the file
+exists. Variants add \verb{_greyscale} etc. to the name of the first format.
 }
 
 \section{Differences from ggplot2}{
@@ -68,34 +92,39 @@ the single \code{filename}.
 \section{Embedded data and privacy}{
 
 With \code{ggsaveR.embed_data = TRUE} the PNG contains the \strong{raw data} behind the
-plot (all columns, not only the plotted ones) and, for plots built inside a
-function, every object in that function's environment. Do not share such
-files if the data are sensitive, and expect larger files. Use
-\code{ggsaveR.embed_metadata} to embed less, or \code{guard = TRUE} to skip a single
-plot.
+plot (all columns, not only the plotted ones) and, if \code{"plot"} is embedded,
+the plot object, which for plots built inside a function includes that
+function's environment. Do not share such files if the data are sensitive.
+Use \code{ggsaveR.embed_metadata} to embed less, or \code{guard = TRUE} to skip a
+single plot.
 }
 
 \examples{
 library(ggplot2)
-p <- ggplot(mtcars, aes(mpg, wt)) + geom_point()
+p <- ggplot(mtcars, aes(mpg, wt, colour = factor(cyl))) + geom_point()
 out <- file.path(tempdir(), "mtcars.png")
 
 # Works like ggplot2::ggsave()
 ggsave(out, p, width = 5, height = 4)
 
-# Save every plot as both PNG and PDF, and never overwrite
-old <- options(
-  ggsaveR.formats = c("png", "pdf"),
-  ggsaveR.overwrite_action = "unique"
-)
+# Save every plot as PNG and PDF, and never overwrite
+old <- ggsaveR_options(formats = c("png", "pdf"), overwrite_action = "unique")
 ggsave(out, p, width = 5, height = 4)
-
-# Bypass the options for one call
-ggsave(out, p, width = 5, height = 4, guard = TRUE)
-
 options(old)
+
+# Two sizes of the same format get the size in their file names:
+# mtcars_120x80mm_300dpi.png and mtcars_240x160mm_150dpi.png
+old <- ggsaveR_options(formats = list(
+  list(device = "png", width = 120, height = 80, units = "mm", dpi = 300),
+  list(device = "png", width = 240, height = 160, units = "mm", dpi = 150)
+))
+ggsave(out, p)
+options(old)
+
+# Bypass all options for one call
+ggsave(out, p, width = 5, height = 4, guard = TRUE)
 }
 \seealso{
-\code{\link[=read_ggsaveR_data]{read_ggsaveR_data()}} to read embedded data back,
-\link{ggsaveR-package} for the options.
+\code{\link[=ggsaveR_options]{ggsaveR_options()}} for all options, \code{\link[=read_ggsaveR_data]{read_ggsaveR_data()}} to read
+embedded data back, \code{\link[=preview_variants]{preview_variants()}} to check colours interactively.
 }
